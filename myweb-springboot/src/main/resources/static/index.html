@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>周末职业网</title>
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+	<!--引入头部-->
+    <div id="header"></div>
+
+    <section id="content">
+         <!-- 工作内容start-->
+        <section class="hemai_jx">
+            <div class="jx_top">
+                <div class="jx_tit">
+                    <span>今日推荐</span>
+                    <img src="images/hand_down.jpg" alt="">
+                </div>
+
+            </div>
+            <div class="jx_content">
+                <!-- Tab panes -->
+                <div class="tab-content">
+                    <!--以下是招聘的最新榜单-->
+                    <table class="table-zanshi">
+                        <caption>已选条件:</caption>
+                        <thead>
+                        <tr>
+                            <th>职位等级
+                            <th>地点
+                            <th>日薪(元/天)
+                            <th>发布时间
+                        </thead>
+                        <tbody class="tbody-zanshi">
+
+                        </tbody>
+                    </table>
+                    <div class="page_num_inf"><!--TODO-->
+                        <i></i> 共
+                        <span></span>页<span></span>条
+                    </div>
+                    <div class="pageNum">
+                        <ul>
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </section>
+    <!-- 旅游 end-->
+   <!--导入底部-->
+    <div id="footer"></div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="js/jquery-3.3.1.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+    <!--导入布局js，共享header和footer-->
+    <script type="text/javascript" src="js/include.js"></script>
+    <script type="text/javascript" src="js/getParameter.js"></script>
+    <script type="text/javascript" src="js/myTool.js"></script>
+    <script type="text/javascript">
+        /*
+        * 发布异步请求,请求招聘信息数据
+        * */
+        //获取用户请求当前页
+        var curPage= getParameter("curPage");
+        $.get(
+            "/jobInfo1/queryJobByPage",//Servlet地址
+            {curPage:curPage},
+            function (resulteInfo) {
+                if(resulteInfo.flag){
+                    //正常获取数据,将招聘列表展示出来
+                    //获取当前页PageBean数据
+                    var pageBean = resulteInfo.data;
+                    //获取当前页列表数据
+                    var jobList = pageBean.data;//获取的数据时一个list集合其中的元素是JobInfo对象
+                    //拼接
+                    var html="";
+                    for(var i=0;i<jobList.length;i++){
+                        var job = jobList[i];
+                    /*<tr>
+                        <td>1
+                        <td>Citizen Kane
+                        <td>1941*/
+                    html+="<tr>\n"+
+                            "<td>"+"<a href=\"/job1_detail.html?job1Id="+job.job1Id+"\">" +
+                            job.jobGrade+"\n"+
+                            "<td>"+job.jobSite+"\n"+
+                            "<td>"+job.jobWage+"\n"+
+                            "<td>"+JX_data(job.jobUpdateDate)+"\n";
+                    }
+                    //更新
+                    $(".tbody-zanshi").html(html);
+                    //更新分页信息
+                    var html = "";
+                    //拼接首页
+                    html+="<li><a href=\"index.html?curPage="+pageBean.firstPage+"\">首页</a></li>";
+                    //拼接上一页pageBean.prePage
+                    if(pageBean.curPage>1){
+                        html+="<li class=\"threeword\"><a href=\"index.html?curPage="+pageBean.prePage+"\">上一页</a></li>";
+                    }
+                    //定义起始页和结束页
+                    var begin,end;
+                    if(pageBean.totalPage<=10){
+                        begin =1;
+                        end = pageBean.totalPage;
+                    }else{
+                        begin = pageBean.curPage-5;
+                        end = pageBean.curPage+4;
+                        // 头溢出,begin<1
+                        if(begin<1){
+                            begin = 1;
+                            end = begin+9;
+                        }
+                        // 尾溢出,end>totalPage
+                        if(end>pageBean.totalPage){
+                            end = pageBean.totalPage;
+                            begin = end-9;
+                        }
+                    }
+                    //每页数字<!--TODO-->
+                    for(var i=begin;i<=end;i++){
+                        if(i==pageBean.curPage){
+                            html+="<li class=\"curPage\"><a href=\"index.html?curPage="+i+"\">"+i+"</a></li>";
+                        }else{
+                            html+="<li><a href=\"index.html?curPage="+i+"\">"+i+"</a></li>";
+                        }
+                    }
+                    //拼接下一页pageBean.nextPage
+                    if(pageBean.curPage<pageBean.totalPage){
+                        html+="<li class=\"threeword\"><a href=\"index.html?curPage="+pageBean.nextPage+"\">下一页</a></li>";
+                    }
+                    //拼接末页pageBean.totalPage
+                    html+=" <li class=\"threeword\"><a href=\"index.html?curPage="+pageBean.totalPage+"\">末页</a></li>";
+                    //更新
+                    $(".pageNum ul").html(html);
+                    //更新总页数
+                    $(".page_num_inf span:eq(0)").html(pageBean.totalPage);
+                    //更新总记录数
+                    $(".page_num_inf span:eq(1)").html(pageBean.count);
+
+                }else{
+                    //发生异常
+                    console.log(resulteInfo.errorMsg);
+
+                }
+            },
+            "json"
+        );
+    </script>
+</body>
+</html>

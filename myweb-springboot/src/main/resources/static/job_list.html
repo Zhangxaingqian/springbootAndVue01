@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>招聘职位-搜索</title>
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" href="css/search.css">
+    <script src="js/jquery-3.3.1.js"></script>
+    <script type="text/javascript" src="js/getParameter.js"></script>
+    <script type="text/javascript" src="js/myTool.js"></script>
+    <script type="text/javascript">
+        //页面加载事件
+        $(function () {
+            initSearch(null);//发送请求,进行搜索
+        });
+
+
+
+        //设置全局变量
+        var result=9;
+        //后台查询二级类别
+        function getJobGrade1(jobGradeId) {
+            /*
+            * 发送ajax请求,去后台查询*/
+            $.ajaxSettings.async = false;
+            $.get(
+                "/jobCategory/getJobGradeById",//Servlet地址
+                {jobGradeId:jobGradeId},
+                function (resulteInfo){
+                    if(resulteInfo.flag){
+                        var data=resulteInfo.data;
+                        result=data.secondName;
+                    }else{
+                        console.log("服务器繁忙")
+                    }
+
+                },
+                "json"
+            );
+            $.ajaxSettings.async = true;
+            return result;
+        }
+        //两位小数的正数的正则表达式
+        var zhengShu=new RegExp(/^((0{1}\.\d{1,2})|([1-9]\d*\.{1}\d{1,2})|([1-9]+\d*)|0)$/);
+        /*
+        * 确定按钮的事件*/
+        function priceReady() {
+            //获取上限和下限的值
+            var max_price = $("#max_price").val();
+            var min_price = $("#min_price").val();
+
+            //对上限和下限的值进行正则判断,上限必须为正数([1-9][0-9]*(\.\d{1,2})?)|(0\.\d{1,2})
+            console.log(max_price);
+            if(zhengShu.test(max_price) &&
+                zhengShu.test(min_price) &&
+                (max_price>min_price) ){
+                //发送post请求
+                var map={min_price:min_price,max_price:max_price};
+                initSearch(map);
+            }else if(zhengShu.test(max_price) && ""==min_price){
+                //发送post请求,默认最小为0
+                var map={min_price:"0",max_price:max_price};
+                initSearch(map);
+            }else if(zhengShu.test(min_price) && ""==max_price){
+                //发送post请求,默认最大为null
+                var map={min_price:min_price,max_price:null};
+                initSearch(map);
+            }else{
+                $("#max_price").val("");
+                $("#min_price").val("");
+                return;
+            }
+        }
+        function initSearch(map) {
+            //获取用户请求当前页
+            var curPage= getParameter("curPage");
+            //获取搜索的rname,这里获取的是url编码的16进制数据,需要转码url解码
+            var jname =decodeURI(getParameter("jname"))=="null"?"":decodeURI(getParameter("jname")) ;
+            $("#content").val(jname);
+            if(null!=map){
+                var minPrice = map.min_price;
+                var maxPrice = map.max_price;
+                var args={curpage: curPage, key: jname,minPrice:minPrice,maxPrice:maxPrice};
+            }else{
+                var args={curpage: curPage, key: jname};
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "/es/search",
+                contentType: "application/json",
+                data: JSON.stringify(args),
+                dataType: "json",
+                success: function (resultInfo) {
+                    if (resultInfo.flag) {
+                        //正常获取数据
+                        //获取当前页PageBean数据
+                        var pageBean = resultInfo.data;
+                        //获取当前页列表数据
+                        var jobList = pageBean.data;
+                        var html = "";
+                        for (job of jobList) {
+                            html += "<tr>\n" +
+                                "<td >" + "<a href=\"/job1_detail.html?job1Id=" + job.id + "\" style='color: #3683ff'>" +
+                                getJobGrade1(job.jobGrade) + "\n" +
+                                "<td>" + job.jobSite + "\n" +
+                                "<td>" + job.jobWage + "\n" +
+                                "<td>" + JX_data(job.jobUpdateDate) + "\n";
+                        }
+                        //更新页面 /*TODO*/
+                        $(".tbody-zanshi").html(html);
+                        //更新分页信息
+                        var html = "";
+                        //拼接首页
+                        html += "<li><a href=\"job_list.html?curPage=" + pageBean.firstPage + "\">首页</a></li>";
+                        //拼接上一页pageBean.prePage
+                        if (pageBean.curPage > 1) {
+                            html += "<li class=\"threeword\"><a href=\"job_list.html?curPage=" + pageBean.prePage + "\">上一页</a></li>";
+                        }
+                        //定义起始页和结束页
+                        var begin, end;
+                        if (pageBean.totalPage <= 10) {
+                            begin = 1;
+                            end = pageBean.totalPage;
+                        } else {
+                            begin = pageBean.curPage - 5;
+                            end = pageBean.curPage + 4;
+                            // 头溢出,begin<1
+                            if (begin < 1) {
+                                begin = 1;
+                                end = begin + 9;
+                            }
+                            // 尾溢出,end>totalPage
+                            if (end > pageBean.totalPage) {
+                                end = pageBean.totalPage;
+                                begin = end - 9;
+                            }
+                        }
+                        //每页数字
+                        for (var i = begin; i <= end; i++) {
+                            if (i == pageBean.curPage) {
+                                html += "<li class=\"curPage\"><a href=\"route_list.html?curPage=" + i + "\">" + i + "</a></li>";
+                            } else {
+                                html += "<li><a href=\"job_list.html?curPage=" + i + "\">" + i + "</a></li>";
+                            }
+                        }
+                        //拼接下一页pageBean.nextPage
+                        if (pageBean.curPage < pageBean.totalPage) {
+                            html += "<li class=\"threeword\"><a href=\"job_list.html?curPage=" + pageBean.nextPage + "\">下一页</a></li>";
+                        }
+                        //拼接末页pageBean.totalPage
+                        html += " <li class=\"threeword\"><a href=\"job_list.html?curPage=" + pageBean.totalPage + "\">末页</a></li>";
+                        //更新
+                        $(".pageNum ul").html(html);
+                        //更新总页数
+                        $(".page_num_inf span:eq(0)").html(pageBean.totalPage);
+                        //更新总记录数
+                        $(".page_num_inf span:eq(1)").html(pageBean.count);
+                    } else {
+                        console.log(resultInfo.errorMsg);
+                    }
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+<!--引入头部-->
+<div id="header"></div>
+    <div class="page_one">
+        <div class="contant">
+            <div class="search_filter_all">
+                <span class="price_range" style="display: inline-block">日薪:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <input class="input_price" id="min_price" type="text" placeholder="￥" >
+                <span>-</span>
+                <input class="input_price" id="max_price" type="text" placeholder="￥" >
+                <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <button class="button_ready" id="btn01" onclick="priceReady()">确定</button>
+            </div>
+            <div class="crumbs">
+                <img src="images/search.png" alt="">
+                <p>职位招聘><span>搜索结果</span>
+
+                </p>
+            </div>
+            <div class="xinxi clearfix">
+                <div class="left">
+                    <!--//表格,职位信息--><!--TODO-->
+                    <table class="table-zanshi">
+                        <thead>
+                        <tr>
+                            <th >职位等级
+                            <th>地点
+                            <th>日薪
+                            <th>发布时间
+                        </thead>
+                        <tbody class="tbody-zanshi">
+
+                        </tbody>
+                    </table>
+                    <div class="page_num_inf">
+                        <i></i> 共
+                        <span></span>页<span></span>条
+                    </div>
+                    <div class="pageNum">
+                        <ul>
+                          </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!--引入头部-->
+    <div id="footer"></div>
+    <!--导入布局js，共享header和footer-->
+    <script type="text/javascript" src="js/include.js"></script>
+</body>
+
+</html>

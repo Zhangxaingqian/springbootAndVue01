@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.myweb01.money01.mapper.FavoriteMapper">
+
+   <select id="isFavoriteByJob1Id" resultType="Favorite">
+       select * from tab_favorite where job1_id = #{job1Id} and uid = #{uid}
+   </select>
+    
+    <insert id="addFavorite">
+        insert into tab_favorite values(#{job1Id},now(),#{uid});
+    </insert>
+
+    <select id="queryFavoriteCount" resultType="Integer">
+        select count(*) from tab_favorite where uid = #{uid}
+    </select>
+
+    <resultMap id="favoriteRouteResultMap" type="Favorite" autoMapping="true">
+        <association property="jobInfo1" javaType="JobInfo1" autoMapping="true">
+            <id column="job1_id" property="job1Id"></id>
+        </association>
+
+    </resultMap>
+
+    <select id="queryFavoriteByPage" resultMap="favoriteRouteResultMap">
+        SELECT
+            *
+        FROM
+            tab_favorite f
+        INNER JOIN tab_route r ON f.rid = r.rid
+        WHERE
+            f.uid = #{uid}
+        limit #{firstResult} , #{pageSize}
+    </select>
+
+    <select id="queryFavoriteList" resultMap="favoriteRouteResultMap">
+        SELECT
+            *
+        FROM
+            tab_favorite f
+        INNER JOIN tab_jobinfo1 d ON f.job1_id = d.job1_id
+        WHERE
+            f.uid = #{uid}
+    </select>
+
+
+</mapper>

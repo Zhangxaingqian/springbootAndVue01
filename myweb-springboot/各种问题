@@ -1,0 +1,84 @@
+spring:
+  datasource:
+    name: mysqlTest
+    type: com.alibaba.druid.pool.DruidDataSource
+    #druid连接池相关配置
+    druid:
+      #监控拦截统计的filters
+      filters: stat
+      driver-class-name: com.mysql.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=true
+      username: root
+      password: 123456
+      #配置初始化大小，最小，最大
+      initial-size: 1
+      min-idle: 1
+      max-active: 20
+      #获取连接等待超时时间
+      max-wait: 6000
+      #间隔多久检测一次需要关闭的空闲连接
+      time-between-eviction-runs-millis: 60000
+      #一个连接在池中的最小生存时间
+      min-evictable-idle-time-millis: 300000
+      #打开PSCache，并指定每个连接上PSCache的大小。oracle设置为true，mysql设置为false。分库分表设置较多推荐设置
+      pool-prepared-statements: false
+      max-pool-prepared-statement-per-connection-size: 20
+  http:
+    encoding:
+      charset: utf-8
+      enabled: true
+
+
+1  在默认的情况下maven打包的时候，对于src/main/java目录只打包源代码，
+而不会打包其他文件。所以此时如果把对应的mapper文件放到src/main/java目录下时，
+不会打包到最终的jar文件夹中，也不会输出到target文件夹中
+
+2   #对应mapper映射文件路径,在resources文件夹下面
+      mapper-locations: classpath:mappers/*.xml
+
+3   eclispe中如果出现configuration reference non-existing project
+需要右键项目,configure 转化为maven项目
+
+4  idea第一次提交代码到github  https://www.cnblogs.com/asunwei/p/9533424.html
+
+5  rabbitmq如果虚拟用户为myVirtualHost01 在yml文件中不能加/ 仅仅就是myVirtualHost01
+
+6  在JAVA中，一切皆对象，而将对象的状态信息转为存储或传输的形式需要序列化,比如将java对象存储在
+redis中就需要
+7  windows进入redsi数据库的命令,在启动目录中redis-cli.exe -h 127.0.0.1 -p 6379
+keys * 获取所有的键
+
+8  当用变量去接收ajax的回调函数的值的时候一定要注意:
+必须使用全局变量,必须是同步的ajax,因为异步的ajax不确定什么时候会得到值
+
+
+9  linux中启动elasticsearch-head的命令 grunt server
+
+10  JsonParseException: Unexpected character ('¬' (code 172)): expected a valid value (n
+这是向mq传递消息的时候没有将对象转化为json对象
+
+11 将搜索的内容保存到sessionStorage中,当页面跳转的时候进行反显
+sessionStorage是临时的,随着浏览器关闭而消亡,而localStorage是永久的,保存在硬盘中
+
+12  es中的queryBuilder的使用参照https://blog.csdn.net/xiaozm1223/article/details/89210295
+
+13  正整数^((0{1}\.\d{1,2})|([1-9]\d*\.{1}\d{1,2})|([1-9]+\d*))$
+正数^((0{1}\.\d{1,2})|([1-9]\d*\.{1}\d{1,2})|([1-9]+\d*)|0)$ 两位小数
+
+14  $.post是$.ajax的简写形式,当mvc的后端的接收使用@requestBody时,前台的参数必须是
+json格式,在后台才可以映射对应的java类,而$.post无法指定contentType:jsoN, 所以只能使用
+$.ajax,指定类型,并且使用Json.stringfy将对象转化为json字符串
+
+
+15  resultType：查询的结果在pojo中有对应的字段,一般是单表
+resultMap: 需要手动设置对应的字段关系,一把用在一对多查询
+
+16  java -jar -Dlogging.path=e:\mylog 后面跟上jar包就可以启动
+
+nohup java -jar myweb-springboot-1.0-SNAPSHOT.jar > ../logs/spring.log &
+
+以上是后台启动,并指定日志的命令
+
+17  linux中 shift+g 跳到最后
+
+18 netstat -ano|findstr "8080" 查看8080进程   taskkill /pid  跟上pid杀死进程

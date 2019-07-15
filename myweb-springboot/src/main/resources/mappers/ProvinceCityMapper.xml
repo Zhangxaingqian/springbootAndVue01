@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.myweb01.money01.mapper.IProvinceCityMapper">
+    <!--根据省份获取城市-->
+    <select id="getCitys" resultType="City">
+        select c.* from city  c
+        where c.provincecode = #{provinceCode};
+
+    </select>
+    <!--根据城市获取地区-->
+    <select id="getAreaByCity" resultType="Area">
+        select a.* from area  a
+        where a.citycode = #{cityCode};
+    </select>
+    <!--获取所有的省份-->
+    <select id="getAllProvince" resultType="Province">
+        select p.* from province  p;
+
+    </select>
+    <!--通过城市获取省份-->
+    <select id="getProvinceByCityCode" resultType="City">
+       select c.* from city  c
+        where c.code = #{cityCode};
+    </select>
+
+    <!--根据省份获取城市-->
+    <select id="getAreaNameByCode" resultType="Area">
+        select a.name from area  a
+        where a.code = #{areaCode};
+
+    </select>
+
+
+</mapper>

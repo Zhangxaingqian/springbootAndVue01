@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.myweb01.money01.mapper.RouteMapper">
+
+    <!--查询人气旅游-->
+    <select id="queryPopularityRouteList" resultType="Route">
+        select * from tab_route where rflag = "1" order by count desc limit 0 , 4
+    </select>
+
+    <!--查询最新旅游-->
+    <select id="queryNewsRouteList" resultType="Route">
+        select * from  tab_route where rflag = "1" order by rdate desc limit 0 , 4
+    </select>
+
+    <!--查询主题旅游-->
+    <select id="queryThemesRouteList" resultType="Route">
+        select * from tab_route where  rflag = "1" and isThemeTour = "1" order by rdate desc limit 0 , 4
+    </select>
+
+
+    <!--查询总记录数-->
+    <select id="queryRouteCount" resultType="Integer">
+        select count(*) from tab_route where rflag = "1"
+        <if test="cid!=null">
+            and cid = #{cid}
+        </if>
+        <if test="rname!=null and rname.trim()!=''">
+            and rname like '%' #{rname} '%'
+        </if>
+    </select>
+
+    <!--查询分页数据-->
+    <select id="queryRouteListPage" resultType="Route">
+        select * from tab_route where rflag = "1"
+        <if test="cid!=null">
+            and cid = #{cid}
+        </if>
+        <if test="rname!=null and rname.trim()!=''">
+            and rname like '%' #{rname} '%'
+        </if>
+        limit #{firstResult} , #{pageSize}
+    </select>
+
+    <!--<resultMap id="routeCategorySellerImgResultMap" type="Route" autoMapping="true">
+        <id column="rid" property="rid"></id>
+
+        <association property="category" javaType="Category" autoMapping="true">
+            <id column="cid" property="cid"></id>
+        </association>
+
+        <association property="seller" javaType="Seller" autoMapping="true">
+            <id column="sid" property="sid"></id>
+        </association>
+
+        <collection property="routeImgList" javaType="List" ofType="RouteImg" autoMapping="true">
+            <id column="rgid" property="rgid"></id>
+        </collection>
+
+    </resultMap>
+-->
+
+
+    <!--<select id="queryRouteByRid" resultMap="routeCategorySellerImgResultMap">
+
+        SELECT
+            *
+        FROM
+            tab_route r
+        INNER JOIN tab_category c ON r.cid = c.cid
+        INNER JOIN tab_seller s on s.sid = r.sid
+        INNER JOIN tab_route_img i on i.rid = r.rid
+        WHERE
+            r.rid = #{rid}
+
+    </select>-->
+    <update id="updateRouteCount">
+        update tab_route set count = count + 1 where rid = #{rid}
+    </update>
+
+    <select id="queryRouteFavoriteNum" resultType="Integer">
+        select count from tab_route where rid = #{rid}
+    </select>
+
+</mapper>

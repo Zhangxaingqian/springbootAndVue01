@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.myweb01.money01.mapper.JobInfo1Mapper">
+    <!--分页查询工作表1的信息-->
+    <select id="selectJobInfo1ByPage" resultType="java.util.HashMap">
+        select
+          j.job1_id as 'job1Id',
+        (select f.first_name
+        from first_job_category f
+        where f.first_id=j.job_grade)
+                  as 'jobCategory',
+        (select s.second_name
+        from second_job_category s
+        where s.second_id=j.job_grade)
+                  as 'jobGrade',
+        j.job_site as 'jobSite',
+        j.job_wage as 'jobWage',
+        j.sex as 'sex',
+        j.first_name as 'firstName',
+        j.phone_num as 'phoneNum',
+        j.job_create_date as 'jobCreateDate',
+        j.job_update_date as 'jobUpdateDate'
+        from tab_jobinfo1 j
+        inner join second_job_category s
+        where j.job_grade = s.second_id
+
+        <if test="jname!=null and jname.trim()!=''">
+             and s.second_name like '%' #{jname} '%'
+        </if>
+
+        order by j.job_update_date
+        limit #{firstResult} , #{pageSize}
+    </select>
+    <!--查询总记录数-->
+    <select id="queryJobInfo1Count" resultType="Integer">
+        select count(*) from tab_jobinfo1 j
+        inner join second_job_category s
+        where j.job_grade = s.second_id
+
+        <if test="jname!=null and jname.trim()!=''">
+            and s.second_name like '%' #{jname} '%'
+        </if>
+
+
+    </select>
+    <!--查询招聘工作详细信息,关联工作详情表-->
+    <!--返回两表联查结果的map-->
+    <resultMap id="job1AndDetail" type="JobInfo1" autoMapping="true">
+        <id column="job1_id" property="job1Id"></id>
+
+        <association property="jbob1Detail" javaType="Jbob1Detail" autoMapping="true">
+            <id column="d_job1_id" property="dJob1Id"></id>
+        </association>
+
+    </resultMap>
+    <!--查询两表联查-->
+    <select id="selectDetailJobInfo1ById" resultMap="job1AndDetail">
+        SELECT
+            j.job1_id,
+            j.job_category,
+            j.job_grade,
+            j.job_site,
+            j.job_wage,
+            j.sex,
+            j.first_name,
+            j.phone_num,
+            j.province_code,
+            j.city_code,
+            j.area_code,
+            d.job1_detail
+        FROM
+            tab_jobinfo1 j
+        INNER JOIN tab_job1_detail d ON j.job1_Id = d.job1_Id
+        WHERE
+            j.job1_Id = #{job1Id}
+
+    </select>
+    <!--保存工作表的信息-->
+    <insert id="saveJobInfo" useGeneratedKeys="true" keyProperty="job1Id" keyColumn="job1_id">
+        insert into tab_jobinfo1
+        values(null,#{userName},#{jobCategory},#{jobGrade},#{jobSite},
+        #{jobCreateDate},#{jobWage},#{firstName},#{phoneNum},#{sex},
+        #{jobCreateDate},#{provinceCode},#{cityCode},#{areaCode});
+    </insert>
+    <!--保存工作详情的信息-->
+    <insert id="saveJobInfoDetail">
+        insert into tab_job1_detail values(null,#{jobInfo1.job1Id},#{job1Detail.job1Detail});
+    </insert>
+    <!--//根据用户名查出工作表的id-->
+    <select id="queryJobIdByUserName" resultType="Integer">
+        select j.job1_id
+              from tab_jobinfo1 j
+              where j.user_name=#{userName}
+    </select>
+    <!--更新工作表的信息-->
+    <update id="updateJobInfo" >
+        update tab_jobinfo1 j
+        <trim prefix="set" suffixOverrides=",">
+        <if test="jobCategory!=null">j.job_category=#{jobCategory},</if>
+            <if test="jobGrade!=null">j.job_grade=#{jobGrade},</if>
+            <if test="jobSite!=null">j.job_site=#{jobSite},</if>
+            <if test="provinceCode!=null">j.province_code=#{provinceCode},</if>
+            <if test="cityCode!=null">j.city_code=#{cityCode},</if>
+            <if test="areaCode!=null">j.area_code=#{areaCode},</if>
+            <if test="jobWage!=null">j.job_wage=#{jobWage},</if>
+            <if test="sex!=null">j.sex=#{sex},</if>
+            <if test="firstName!=null">j.first_name=#{firstName},</if>
+            <if test="phoneNum!=null">j.phone_num=#{phoneNum},</if>
+            <if test="jobUpdateDate!=null">j.job_update_date=#{jobUpdateDate},</if>
+        </trim>
+        where j.job1_id=#{job1Id}
+    </update>
+    <!--更新工作详情的信息-->
+    <update id="updateJobInfoDetail">
+         update tab_job1_detail d
+        <trim prefix="set" suffixOverrides=",">
+            <if test="job1Detail.job1Detail!=null">d.job1_detail=#{job1Detail.job1Detail},</if>
+        </trim>
+        where d.job1_id=#{jobInfo1.job1Id}
+    </update>
+
+    <!--查询两表联查-->
+    <select id="selectAll" resultMap="job1AndDetail">
+        SELECT
+            j.job1_id,
+            j.job_category,
+            j.job_grade,
+            j.job_site,
+            j.job_wage,
+            j.sex,
+            j.first_name,
+            j.phone_num,
+            j.province_code,
+            j.city_code,
+            j.area_code,
+            j.job_update_date,
+            j.job_create_date,
+            d.job1_detail
+        FROM
+            tab_jobinfo1 j
+        INNER JOIN tab_job1_detail d ON j.job1_Id = d.job1_Id
+    </select>
+</mapper>

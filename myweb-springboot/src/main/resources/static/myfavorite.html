@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>周末兼职网-我的收藏</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" href="css/index.css">
+    <style>
+        .tab-content .row > div {
+            margin-top: 16px;
+        }
+
+        .tab-content {
+            margin-bottom: 36px;
+        }
+    </style>
+    <script src="js/jquery-3.3.1.js"></script>
+    <script type="text/javascript" src="js/getParameter.js"></script>
+    <script type="text/javascript" src="js/myTool.js"></script>
+
+    <script type="text/javascript">
+
+        //加载事件
+        $(function () {
+            //获取用户搜藏的当前页
+            var curPage = getParameter("curPage");//1
+            console.log("111");
+            //发送异步请求获取分页搜藏PageBean
+            $.post(
+                "/favorite/findFavoriteByPage",
+                {curPage: curPage},
+                function (resultInfo) {
+                    if (resultInfo.flag) {
+                        //正常获取结果pageBean
+                        var pageBean = resultInfo.data;//查询出来所有的收藏路线信息,将所有的分页数据封装到了PageBean
+                        //更新页面列表数据
+                        var html = "";
+                        if (pageBean.data!= null&&pageBean.data.length!=0) {
+                            for (favorite of pageBean.data) {//pageBean的data属性应该是一个List<Favorite>,
+                                job=favorite.jobInfo1;
+                                html+="<tr>\n"+
+                                    "<td>"+"<a href=\"/job1_detail.html?job1Id="+job.job1Id+"\">" +
+                                    job.jobGrade+"\n"+
+                                    "<td>"+job.jobSite+"\n"+
+                                    "<td>"+job.jobWage+"\n"+
+                                    "<td>"+JX_data(job.jobUpdateDate)+"\n";
+                            }
+                            //更新
+                            $(".tbody-zanshi").html(html);
+                            //更新分页信息
+                            var html = "";
+                            //拼接首页
+                            html+="<li><a href=\"index.html?curPage="+pageBean.firstPage+"\">首页</a></li>";
+                            //拼接上一页pageBean.prePage
+                            if(pageBean.curPage>1){
+                                html+="<li class=\"threeword\"><a href=\"index.html?curPage="+pageBean.prePage+"\">上一页</a></li>";
+                            }
+                            //定义起始页和结束页
+                            var begin,end;
+                            if(pageBean.totalPage<=10){
+                                begin =1;
+                                end = pageBean.totalPage;
+                            }else{
+                                begin = pageBean.curPage-5;
+                                end = pageBean.curPage+4;
+                                // 头溢出,begin<1
+                                if(begin<1){
+                                    begin = 1;
+                                    end = begin+9;
+                                }
+                                // 尾溢出,end>totalPage
+                                if(end>pageBean.totalPage){
+                                    end = pageBean.totalPage;
+                                    begin = end-9;
+                                }
+                            }
+                            //每页数字<!--TODO-->
+                            for(var i=begin;i<=end;i++){
+                                if(i==pageBean.curPage){
+                                    html+="<li class=\"curPage\"><a href=\"index.html?curPage="+i+"\">"+i+"</a></li>";
+                                }else{
+                                    html+="<li><a href=\"index.html?curPage="+i+"\">"+i+"</a></li>";
+                                }
+                            }
+                            //拼接下一页pageBean.nextPage
+                            if(pageBean.curPage<pageBean.totalPage){
+                                html+="<li class=\"threeword\"><a href=\"index.html?curPage="+pageBean.nextPage+"\">下一页</a></li>";
+                            }
+                            //拼接末页pageBean.totalPage
+                            html+=" <li class=\"threeword\"><a href=\"index.html?curPage="+pageBean.totalPage+"\">末页</a></li>";
+                            //更新
+                            $(".pageNum ul").html(html);
+                            //更新总页数
+                            $(".page_num_inf span:eq(0)").html(pageBean.totalPage);
+                            //更新总记录数
+                            $(".page_num_inf span:eq(1)").html(pageBean.count);
+                            }
+                        $(".tab-content .row").html(html);
+
+                        //更新分页信息
+                        var html = "";
+                        //拼接首页
+                        html += "<li><a href=\"myfavorite.html?curPage=" + pageBean.firstPage + "\">首页</a></li>";
+                        //拼接上一页
+                        if (pageBean.curPage > 1) {
+                            html += "<li class=\"threeword\"><a href=\"myfavorite.html?curPage=" + pageBean.prePage + "\">上一页</a></li>";
+                        }
+                        //定义起始页和结束页
+                        var begin, end;
+                        if (pageBean.totalPage <= 10) {
+                            begin = 1;
+                            end = pageBean.totalPage;
+                        } else {
+                            begin = pageBean.curPage - 5;
+                            end = pageBean.curPage + 4;
+                            // 头溢出,begin<1
+                            if (begin < 1) {
+                                begin = 1;
+                                end = begin + 9;
+                            }
+                            // 尾溢出,end>totalPage
+                            if (end > pageBean.totalPage) {
+                                end = pageBean.totalPage;
+                                begin = end - 9;
+                            }
+                        }
+                        //每页数字
+                        for (var i = begin; i <= end; i++) {
+                            if (i == pageBean.curPage) {
+                                html += "<li class=\"curPage\"><a href=\"myfavorite.html?curPage=" + i + "\">" + i + "</a></li>";
+                            } else {
+                                html += "<li><a href=\"myfavorite.html?curPage=" + i + "\">" + i + "</a></li>";
+                            }
+                        }
+                        //拼接下一页
+                        if (pageBean.curPage < pageBean.totalPage) {
+                            html += "<li class=\"threeword\"><a href=\"myfavorite.html?curPage=" + pageBean.nextPage + "\">下一页</a></li>";
+                        }
+                        //拼接末页
+                        html += " <li class=\"threeword\"><a href=\"myfavorite.html?curPage=" + pageBean.totalPage + "\">末页</a></li>";
+                        //更新
+                        $(".pageNum ul").html(html);
+                    } else {
+                        console.log(resultInfo.errorMsg);
+                    }
+                },
+                "json"
+            );
+        });
+    </script>
+</head>
+<body>
+<!--引入头部-->
+<div id="header"></div>
+
+<!-- 排行榜 start-->
+<section id="content">
+    <section class="hemai_jx">
+       <!-- <div class="bread_box">
+            <a href="/">首页</a>
+        </div>-->
+        <div class="jx_top">
+            <div class="jx_tit">
+                <img src="images/hand_down.jpg" alt="">
+                <span>我的收藏</span>
+            </div>
+        </div>
+
+        <div class="jx_content">
+            <!-- Tab panes -->
+            <div class="tab-content">
+                <!--以下是招聘的最新榜单-->
+                <table class="table-zanshi">
+                    <caption>已选条件:</caption>
+                    <thead>
+                    <tr>
+                        <th>职位等级
+                        <th>地点
+                        <th>日薪
+                        <th>发布时间
+                    </thead>
+                    <tbody class="tbody-zanshi">
+
+                    </tbody>
+                </table>
+                <div class="page_num_inf"><!--TODO-->
+                    <i></i> 共
+                    <span></span>页<span></span>条
+                </div>
+                <div class="pageNum">
+                    <ul>
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+</section>
+<!-- 排行榜 end-->
+
+<!--引入尾部-->
+<div id="footer"></div>
+<!--导入布局js，共享header和footer-->
+<script type="text/javascript" src="js/include.js"></script>
+
+</body>
+</html>
