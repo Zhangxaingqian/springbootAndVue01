@@ -16,6 +16,9 @@
       <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
       <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
+    <script src="./js/vue.js"></script>
+    <!--vue-source依赖于vue-->
+    <script src="./js/vue-resource-1.3.4.js"></script>
 </head>
 <body>
 	<!--引入头部-->
@@ -31,31 +34,51 @@
                 </div>
 
             </div>
-            <div class="jx_content">
+            <div class="jx_content" id="job_content">
                 <!-- Tab panes -->
                 <div class="tab-content">
                     <!--以下是招聘的最新榜单-->
                     <table class="table-zanshi">
-                        <caption>已选条件:</caption>
+                        <!--<caption>已选条件:</caption>-->
                         <thead>
-                        <tr>
+                        <tr >
                             <th>职位等级
                             <th>地点
                             <th>日薪(元/天)
                             <th>发布时间
                         </thead>
                         <tbody class="tbody-zanshi">
+                        <tr v-for="job in jobList">
+                            <td ><a v-text="job.jobGrade" :href="'job1_detail.html?job1Id='+job.job1Id"></a></td>
+                            <td v-text="job.jobSite"></td>
+                            <td v-text="job.jobWage"></td>
+                            <td >{{job.jobUpdateDate | dateFormat}}</td>
+                        </tr>
 
                         </tbody>
                     </table>
                     <div class="page_num_inf"><!--TODO-->
                         <i></i> 共
-                        <span></span>页<span></span>条
+                        <span v-text="pageInfo.totalPage"></span>页<span v-text="pageInfo.count"></span>条
                     </div>
                     <div class="pageNum">
-                        <ul>
+                        <ul >
+                            <li><a :href="'index.html?curPage='+pageInfo.firstPage">首页</a></li>
+                            <li class="threeword" v-show="pageInfo.curPage>1"><a :href="'index.html?curPage='+pageInfo.prePage">上一页</a></li>
 
+                            <span v-for="num in end " >
+                                <span v-if="num == pageInfo.curPage">
+                                    <li class="curPage"><a :href="'index.html?curPage='+num">{{num}}</a></li>
+                                </span>
+                                <span v-else-if="num >=begin">
+                                    <li><a :href="'index.html?curPage='+num">{{num}}</a></li>
+                                </span>
+                            </span>
+                            <li class="threeword" v-show="pageInfo.curPage<pageInfo.totalPage"><a :href="'index.html?curPage='+pageInfo.nextPage">下一页</a></li>
+
+                            <li class="threeword"><a :href="'index.html?curPage='+pageInfo.totalPage">末页</a></li>
                         </ul>
+
                     </div>
                 </div>
             </div>
@@ -73,95 +96,72 @@
     <script type="text/javascript" src="js/include.js"></script>
     <script type="text/javascript" src="js/getParameter.js"></script>
     <script type="text/javascript" src="js/myTool.js"></script>
-    <script type="text/javascript">
-        /*
-        * 发布异步请求,请求招聘信息数据
-        * */
-        //获取用户请求当前页
-        var curPage= getParameter("curPage");
-        $.get(
-            "/jobInfo1/queryJobByPage",//Servlet地址
-            {curPage:curPage},
-            function (resulteInfo) {
-                if(resulteInfo.flag){
-                    //正常获取数据,将招聘列表展示出来
-                    //获取当前页PageBean数据
-                    var pageBean = resulteInfo.data;
-                    //获取当前页列表数据
-                    var jobList = pageBean.data;//获取的数据时一个list集合其中的元素是JobInfo对象
-                    //拼接
-                    var html="";
-                    for(var i=0;i<jobList.length;i++){
-                        var job = jobList[i];
-                    /*<tr>
-                        <td>1
-                        <td>Citizen Kane
-                        <td>1941*/
-                    html+="<tr>\n"+
-                            "<td>"+"<a href=\"/job1_detail.html?job1Id="+job.job1Id+"\">" +
-                            job.jobGrade+"\n"+
-                            "<td>"+job.jobSite+"\n"+
-                            "<td>"+job.jobWage+"\n"+
-                            "<td>"+JX_data(job.jobUpdateDate)+"\n";
-                    }
-                    //更新
-                    $(".tbody-zanshi").html(html);
-                    //更新分页信息
-                    var html = "";
-                    //拼接首页
-                    html+="<li><a href=\"index.html?curPage="+pageBean.firstPage+"\">首页</a></li>";
-                    //拼接上一页pageBean.prePage
-                    if(pageBean.curPage>1){
-                        html+="<li class=\"threeword\"><a href=\"index.html?curPage="+pageBean.prePage+"\">上一页</a></li>";
-                    }
-                    //定义起始页和结束页
-                    var begin,end;
-                    if(pageBean.totalPage<=10){
-                        begin =1;
-                        end = pageBean.totalPage;
-                    }else{
-                        begin = pageBean.curPage-5;
-                        end = pageBean.curPage+4;
-                        // 头溢出,begin<1
-                        if(begin<1){
-                            begin = 1;
-                            end = begin+9;
-                        }
-                        // 尾溢出,end>totalPage
-                        if(end>pageBean.totalPage){
-                            end = pageBean.totalPage;
-                            begin = end-9;
-                        }
-                    }
-                    //每页数字<!--TODO-->
-                    for(var i=begin;i<=end;i++){
-                        if(i==pageBean.curPage){
-                            html+="<li class=\"curPage\"><a href=\"index.html?curPage="+i+"\">"+i+"</a></li>";
+<script>
+    //定义过滤器,进行时间的格式化,这是全局的,过滤器只能在插值表达式中使用
+    Vue.filter("dateFormat",function (dateStr) {
+        var date=new Date(dateStr);
+        //获取年月日
+        var year=date.getFullYear();
+        var month=(date.getMonth()+1).toString().padStart(2,"0");
+        var day=date.getDate().toString().padStart(2,"0");
+        return `${year}-${month}-${day}`;
+    });
+    //定义一个vue实例
+    var vm =new Vue({
+        el:"#job_content",
+        data:{
+            jobList:[],//工作列表数组
+            resultInfo:{},//ajax返回的结果
+            pageInfo:{},//工作分页信息
+            begin:null,//起始页
+            end:null,//结束页
+        },
+        created(){//发送get请求获取工作数据
+            var curPage= getParameter("curPage");
+            console.log("curpage="+curPage);
+            this.$http.get('jobInfo1/queryJobByPage',
+                {
+                    params:{curPage: curPage}
+                })
+                .then(function (result) {
+                    //将结果赋值给resultInfo
+                    this.resultInfo=result.body;
+                    //如果返回正确的数据,给list赋值
+                    if(this.resultInfo.flag){
+                        this.pageInfo=this.resultInfo.data;
+                        this.jobList=this.pageInfo.data;
+                        console.log(this.jobList);
+                        //给begin和end赋值
+                        if(this.pageInfo.totalPage<=10){
+                            this.begin =1;
+                            this.end = this.pageInfo.totalPage;
                         }else{
-                            html+="<li><a href=\"index.html?curPage="+i+"\">"+i+"</a></li>";
+                            this.begin = this.pageInfo.curPage-5;
+                            this.end = this.pageInfo.curPage+4;
+                            // 头溢出,begin<1
+                            if(this.begin<1){
+                                this.begin = 1;
+                                this.end = this.begin+9;
+                            }
+                            // 尾溢出,end>totalPage
+                            if(this.end>this.pageInfo.totalPage){
+                                this.end = this.pageInfo.totalPage;
+                                this.begin = this.end-9;
+                            }
                         }
+                    }else {
+                        console.log("服务器繁忙");
                     }
-                    //拼接下一页pageBean.nextPage
-                    if(pageBean.curPage<pageBean.totalPage){
-                        html+="<li class=\"threeword\"><a href=\"index.html?curPage="+pageBean.nextPage+"\">下一页</a></li>";
-                    }
-                    //拼接末页pageBean.totalPage
-                    html+=" <li class=\"threeword\"><a href=\"index.html?curPage="+pageBean.totalPage+"\">末页</a></li>";
-                    //更新
-                    $(".pageNum ul").html(html);
-                    //更新总页数
-                    $(".page_num_inf span:eq(0)").html(pageBean.totalPage);
-                    //更新总记录数
-                    $(".page_num_inf span:eq(1)").html(pageBean.count);
+                });
+        },
+        updated(){
 
-                }else{
-                    //发生异常
-                    console.log(resulteInfo.errorMsg);
+        },
+        methods:{
 
-                }
-            },
-            "json"
-        );
-    </script>
+        },
+
+    });
+</script>
 </body>
 </html>
