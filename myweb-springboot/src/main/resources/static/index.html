@@ -68,10 +68,10 @@
 
                             <span v-for="num in end " >
                                 <span v-if="num == pageInfo.curPage">
-                                    <li class="curPage"><a :href="'index.html?curPage='+num">{{num}}</a></li>
+                                    <li class="curPage"><a :href="'index.html?curPage='+num"  v-text="num"></a></li>
                                 </span>
                                 <span v-else-if="num >=begin">
-                                    <li><a :href="'index.html?curPage='+num">{{num}}</a></li>
+                                    <li><a :href="'index.html?curPage='+num" v-text="num"></a></li>
                                 </span>
                             </span>
                             <li class="threeword" v-show="pageInfo.curPage<pageInfo.totalPage"><a :href="'index.html?curPage='+pageInfo.nextPage">下一页</a></li>
@@ -118,7 +118,6 @@
         },
         created(){//发送get请求获取工作数据
             var curPage= getParameter("curPage");
-            console.log("curpage="+curPage);
             this.$http.get('jobInfo1/queryJobByPage',
                 {
                     params:{curPage: curPage}
@@ -130,7 +129,6 @@
                     if(this.resultInfo.flag){
                         this.pageInfo=this.resultInfo.data;
                         this.jobList=this.pageInfo.data;
-                        console.log(this.jobList);
                         //给begin和end赋值
                         if(this.pageInfo.totalPage<=10){
                             this.begin =1;

@@ -1,271 +1,95 @@
 <script src="js/jquery-3.3.1.js"></script>
-<script type="text/javascript">
-    //页面加载时获取登录的用户数据
-    $(function () {
-        $(".login").hide();//登录信息隐藏
-        //请求servlet，获取登录用户数据
+<script src="./js/vue.js"></script>
+<!--vue-source依赖于vue-->
+<script src="./js/vue-resource-1.3.4.js"></script>
 
-        $.post(
-            "/user/queryInfoByLoginUser",
-            //{action:"getLoginUserData"},//请求方法
-            function (resultInfo) {
-                if(resultInfo.flag){
-                    //已登录
-                    $(".login_out").hide();//没有登录信息隐藏
-                    /*$(".user_a").html(" <span>您好,&nbsp;"+resultInfo.data+"</span>\n" +
-                        "                <a href=\"myfavorite.html\" class=\"collection\">我的收藏</a>\n" +
-                        "                <a href=\"/user/loginOut\">退出</a>").show();*/
-                    $(".user_a").html(" <span>"+resultInfo.data+"</span>\n").show();
-                    //我要招聘
-                    $(".user_perInfo").html(" <a href=\"myJobInfo.html\" class=\"collection\">我要招聘</a>");
-                    //我的收藏
-                    $(".user_lock").html(" <a href=\"myfavorite.html\" class=\"collection\">我的收藏</a>");
-                    //退出
-                    $(".user_key").html(" <a href=\"/user/loginOut\">退出</a>");
-
-                    //已登录的时候,鼠标放到用户名上,弹出下拉框
-                   /* var timer;
-                    $(".user_header a").mouseover(function () {
-                        clearTimeout(timer);
-                        $(".userInfo").show();
-                    });
-                    $(".user_header a").mouseout(function () {
-                        timer = setTimeout(function () {
-                            $(".userInfo").hide();
-                        }, 500);
-                    });
-                    $(".user_ul").mouseover(function () {
-                        clearTimeout(timer);
-                        $(".userInfo").show();
-                    });
-                    $(".user_ul").mouseout(function () {
-                        $(".userInfo").hide();
-                    });*/
-
-                }else{
-                    //未登录
-                    $(".login_out").show();//没有登录信息显示
-                    $(".login").hide();//登录信息隐藏
-                }
-            },
-            "json"
-        );
-    });
-
-</script>
 <!-- 头部 start -->
     <header id="header" >
         <div class="top_banner">
             <img src="images/myBackGroud.jpg" alt="">
         </div>
-        <div class="shortcut">
-            <!-- 未登录状态  -->
-            <div class="login_out">
-                <a href="login.html">登录</a>
-                <a href="register.html">注册</a>
-               <!-- <a href="/">首页</a>-->
-            </div>
-            <!-- 登录状态  -->
-            <div class="user_header">
-                <a class="user_a" style="font-size: 15px" href="javascript:void(0);"><label runat="server" id="user"></label><i class="user_arrow"></i></a>
-                <div class="userInfo">
-                    <ul class="user_ul" >
-                        <li><a href="#"><i class="user_perInfo"></i></a></li>
-                        <li><a href="#"><i class="user_lock"></i></a></li>
-                        <li><a href="#"><i class="user_key"></i></a></li>
-                    </ul>
+        <div id="total">
+            <div class="shortcut">
+                <!-- 未登录状态  -->
+                <div class="login_out" v-show="!userInfoFlag">
+                    <a href="login.html">登录</a>
+                    <a href="register.html">注册</a>
+                    <!-- <a href="/">首页</a>-->
                 </div>
-            </div>
-
-          <!--  <div class="login">
-                <span >欢迎回来，admin</span>
-                <a href="myfavorite.html" class="collection">我的收藏</a>
-                <a href="javascript:;">退出</a>
-            </div>-->
-        </div>
-        <div class="header_wrap">
-            <div class="topbar">
-                <div class="logo">
-                    <a href="/" ><img src="images/logo.jpg" alt="" style="cursor: pointer" ></a>
-                </div>
-                <div class="search">
-                    <input name="content" id="content" type="text" placeholder="请输入搜索条件" class="search_input" autocomplete="off">
-                    <a  href="javascript:search();" class="search-button">搜索</a>
-                </div>
-                <!--<div class="hot_history" style="display: block;">
-                    &lt;!&ndash;搜索历史&ndash;&gt;
-                    <div class="history" style="display: block;">
-                        <p class="history_tit">搜索历史</p>
-                        <ul class="history_list">
-                            &lt;!&ndash;搜索历史循环列表&ndash;&gt;
-                            <li class="whole" style="display:none;">全部搜索记录</li>
-                            <li class="close_whole" style="display:none;">清除搜索记录</li>
+                <!-- 登录状态  -->
+                <div class="user_header" v-show="userInfoFlag" >
+                    <a class="user_a" style="font-size: 15px" href="javascript:void(0);"><label runat="server" id="user"></label><i class="user_arrow" v-text="resultInfo.data"></i></a>
+                    <div class="userInfo" >
+                        <ul class="user_ul" >
+                            <li><a href="myJobInfo.html"><i class="user_perInfo"  >我要招聘</i></a></li>
+                            <li><a href="myfavorite.html"><i class="user_lock">我的收藏</i></a></li>
+                            <li><a href="/user/loginOut"><i class="user_key">退出</i></a></li>
                         </ul>
-                    </div>-->
+                    </div>
+                </div>
+            </div>
+            <div class="header_wrap">
+                <div class="topbar">
+                    <div class="logo">
+                        <a href="/" ><img src="images/logo.jpg" alt="" style="cursor: pointer" ></a>
+                    </div>
+                    <div class="search" id="search">
+                        <input name="content" v-model="jname" id="content" type="text" placeholder="请输入搜索条件" class="search_input" autocomplete="off">
+                        <a  @click="search()"  style="cursor: pointer" class="search-button">搜索</a>
+                    </div>
+
                 </div>
                 <div class="hottel">
-                    <!--<div class="hot_pic">
-                        <img src="images/hot_tel.jpg" alt="">
-                    </div>-->
-                    <!--<div class="hot_tel">
-                        <p class="hot_time">客服热线(9:00-6:00)</p>
-                        <p class="hot_num">400-618-9090</p>
-                    </div>-->
                 </div>
             </div>
+        </div>
         </div>
     </header>
     <!-- 头部 end -->
     <script type="text/javascript" src="js/getParameter.js"></script>
-    <script type="text/javascript">
-        //加载事件
-        /*$(function () {
-            //发出异步请求，获取分类列表数据
-            var url="/category/queryCategoryList";
-            //var data={action:"findAllCategory"};
-            var callback=function (jsonData) {
-                if(jsonData && jsonData.length>0){
-                    //正常获取结果
-                    //拼接导航菜单
-                    var html = "<li class=\"nav-active\"><a href=\"index.html\">首页</a></li>";
-                    //循环分类列表数据，拼接每个导航菜单
-                    for(category of jsonData){
-                        html+="<li><a href=\"route_list.html?cid="+category.cid+"\">"+category.cname+"</a></li>";
-                    }
-                    html+="<li><a href=\"favoriterank.html\">收藏排行榜</a></li>";
-                    //更新到具体位置
-                    $(".navitem .nav").html(html);
-                }else{
-
-                    //发生异常
-                    console.log(jsonData.errorMsg);
-                }
-            };
-            var type="json";
-            $.post(url,callback,type);
-
-
-            //获取url上的rname,更新到搜索输入框里面
-            var rname =decodeURI( getParameter("rname"));
-            if(rname && rname!="null"){
-                //更新页面上
-                $("#content").val(rname);
+<script>
+    var vm =new Vue({
+        el:"#total",
+        data:{
+            jname:'',//搜索的条件
+            userInfoFlag:false,//是否显示用户的信息
+            resultInfo:{},//后台返回的数据
+        },
+        methods:{
+            //搜索点击事件
+            search(){
+                //将搜索的内容存储在sessionStorage中,当页面刷新的时候再取出来
+                sessionStorage.setItem("search",this.jname);
+                location.href="job_list.html?jname="+this.jname;
             }
-        });*/
-        $(function () {
+        },
+        created(){
             var href = location.href;
             var referrer = document.referrer;
-            console.log("href="+href);
-            console.log("referrer="+referrer);
             //搜索条件反显到文本框,只有搜索页面需要
             //从搜索页面进入的详情页面也需要
             if(-1!=href.indexOf("job_list") ){
                 var jname = sessionStorage.getItem("search");
-                $("#content").val(jname);
+                this.jname=jname;
             }else if(-1!=href.indexOf("job1_detail") && -1!=referrer.indexOf("job_list")){
                 var jname = sessionStorage.getItem("search");
-                $("#content").val(jname);
+                this.jname=jname;
             }
-            //本地搜索记录开始
-            /*var userID=$('.hidden').html();//取得ID
-            var getRecord=window.localStorage.getItem("record"+userID);//根据用户ID取到记录
-            var recordArr=[];
-            var recordArr2=[];
-            console.log(getRecord);
-            if(getRecord==null){
-                $('.history').css('display','none');
-                //向本地添加记录
-                $('.record_btn').click(function(){
-                    recordArr.push($('.record_input').val());
-                    window.localStorage.setItem("record"+userID,recordArr);
-                    $('.record_input').val('');
-                });
-            }
-            else{
-                recordArr2=getRecord.split(',');
-                if(recordArr2.length>2){
-                    $('.whole').css('display','block');
-                    var str='';
-                    for(var i=0;i<2;i++) {
-                        str+='<li class="history_item">'+
-                            '<i class="history_i"></i>'+
-                            '<span>'+recordArr2[i]+'</span>'+
-                            '<i class="x fr" data-index='+i+'></i>'+
-                            '</li>';
+            //发送请求,查看用户是否登录
+            this.$http.get('user/queryInfoByLoginUser')
+                .then(function (result) {
+                    if(result.body.flag){//登录
+                        this.userInfoFlag=true;
+                        this.resultInfo=result.body;
+                    }else{//未登录
+
                     }
-
-                    $('.whole').before(str);
-
-                    //显示全部记录
-                    $('.whole').click(function(){
-                        var str='';
-                        for(var i=2;i<recordArr2.length;i++) {
-                            str+='<li class="history_item">'+
-                                '<i class="history_i"></i>'+
-                                '<span>'+recordArr2[i]+'</span>'+
-                                '<i class="x fr" data-index='+i+'></i>'+
-                                '</li>';
-                        }
-
-                        $('.whole').before(str);
-                        $(this).css('display','none');
-                        $('.close_whole').css('display','block');
-                    });
-                    //清空历史记录
-                    $('.close_whole').click(function(){
-                        window.localStorage.removeItem('record'+userID);
-                        $('.history').remove();
-                    })
-
                 }
-                else{
-                    recordShow(recordArr2);
-                }
-                //向本地添加记录
-                $('.record_btn').click(function(){
-                    recordArr2.push($('.record_input').val());
-                    window.localStorage.setItem("record"+userID,recordArr2);
-                    $('.record_input').val('');
-                });
-
-                //删除单条记录
-                $('.history_list').on('click','.x',function(){
-                    recordArr2.splice($(this).data('index'),1);
-                    window.localStorage.setItem("record"+userID,recordArr2);
-                    $('.history_item').remove();
-                    if(recordArr2.length<3){
-                        $('.whole').css('display','none');
-                    }
-                    recordShow(recordArr2);
-                });
-                //记录显示
-                function recordShow(recordArr2){
-                    var str2='';
-                    for(var j=0;j<recordArr2.length;j++) {
-                        str2+='<li class="history_item">'+
-                            '<i class="history_i"></i>'+
-                            '<span>'+recordArr2[j]+'</span>'+
-                            '<i class="x fr" data-index='+j+'></i>'+
-                            '</li>';
-                    }
-                    $('.whole').before(str2);
-                }*/
-            //本地搜索记录结束
-
-        });
-        //搜索点击事件
-        function search(){
-            //获取url的cid
-            //var cid = getParameter("cid");
-            //获取搜索框文本值
-            var jname =$("#content").val();
-
-            //将搜索的内容存储在sessionStorage中,当页面刷新的时候再取出来
-            sessionStorage.setItem("search",jname);
-            location.href="job_list.html?jname="+jname;
-
+                );
         }
-    </script>
+
+    });
+</script>
      <!-- 首页导航 -->
     <div class="navitem">
         <ul class="nav">

@@ -3,23 +3,6 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cn.myweb01.money01.mapper.RouteMapper">
-
-    <!--查询人气旅游-->
-    <select id="queryPopularityRouteList" resultType="Route">
-        select * from tab_route where rflag = "1" order by count desc limit 0 , 4
-    </select>
-
-    <!--查询最新旅游-->
-    <select id="queryNewsRouteList" resultType="Route">
-        select * from  tab_route where rflag = "1" order by rdate desc limit 0 , 4
-    </select>
-
-    <!--查询主题旅游-->
-    <select id="queryThemesRouteList" resultType="Route">
-        select * from tab_route where  rflag = "1" and isThemeTour = "1" order by rdate desc limit 0 , 4
-    </select>
-
-
     <!--查询总记录数-->
     <select id="queryRouteCount" resultType="Integer">
         select count(*) from tab_route where rflag = "1"
