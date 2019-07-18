@@ -7,6 +7,9 @@
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/common.css">
     <link rel="stylesheet" type="text/css" href="css/job1-detail.css">
+    <script src="./js/vue.js"></script>
+    <!--vue-source依赖于vue-->
+    <script src="./js/vue-resource-1.3.4.js"></script>
 </head>
 
 <body>
@@ -18,25 +21,23 @@
             <p><a href="javascript:history.go(-1)">&lt;&lt;&lt;返回</a></p>
         </div>
 
-        <div class="prosum_box">
-
+        <div class="prosum_box" id="job_detail">
             <div class="prosum_left">
-                <div class="job1_detail_title" >中级程序员</div>
+                <div class="job1_detail_title" v-text="gradeName"></div>
                 <div class="job1_detail_techno" >技术要求:</div>
-                <div class="job1_detail_techno_yaoqiu">
-                    <p style=" text-indent: 2em">
-                        工作三年以上,必须在职,且提供现单位工作证明,
-                        且无犯罪证明
+                <div class="job1_detail_techno_yaoqiu" v-text="jobDetail.job1Detail">
+                    <p style=" text-indent: 2em" >
+
                     </p>
                 </div>
                 <div class="contectMethod">
                     <dl>
                         <dt>联系人:</dt>
-                        <dd class="contactPerson">张先生</dd>
+                        <dd class="contactPerson" v-text="jobInfo.firstName+sex"></dd>
                     </dl><br>
                     <dl>
                         <dt>联系电话:</dt>
-                        <dd class="contacPhone">13248134961</dd>
+                        <dd class="contacPhone" v-text="jobInfo.phoneNum"></dd>
                     </dl>
                 </div>
             </div>
@@ -47,7 +48,8 @@
             </div>
             <!--收藏按钮-->
             <p class="collect" style="text-align: center">
-                <a onclick="addFavorite();"  class="btn already" disabled="disabled"><i class="glyphicon glyphicon-heart-empty"></i>点击收藏</a>
+                <a v-if="bind" v-on:click="addFavorite"  :class="favorateBtnClass" v-bind:disabled="dis"><i class="glyphicon glyphicon-heart-empty"></i>点击收藏</a>
+                <a v-else   :class="favorateBtnClass" v-bind:disabled="dis"><i class="glyphicon glyphicon-heart-empty"></i>不点击收藏</a>
                 <!--<span>已收藏100次</span>-->
             </p>
         </div>
@@ -57,8 +59,6 @@
                 <p>1、禁止任何非法欺骗 <br>
                 <p>2、请自行判断客户信用 <br>
                 <p>3、本网站仅仅提供平台,为非盈利网站 <br>
-
-
             </div>
         </div>
     </div>
@@ -74,122 +74,132 @@
     <script type="text/javascript" src="js/include.js"></script>
 <script type="text/javascript" src="js/getParameter.js"></script>
 <script type="text/javascript" src="js/myTool.js"></script>
-    <script>
-        /*
-        发送请求获取详情数据
-        * */
-        //获取job1Id
-        var job1Id = getParameter("job1Id");
-        //设置全局变量
-        var result=9;
-        $(function () {
-            //发送异步请求,获取工作详细数据
-            $.post(
-                "/jobInfo1/queryJobDetailById",
-                {job1Id:job1Id},
-                function(resultInfo){
-                    if(resultInfo.flag){
-                        //正常获取工作详情信息
-                        var jobInfo = resultInfo.data;
-                        var jobDetail = jobInfo.jbob1Detail;
-                        //更新职位名称
-                        //由于职位的信息保存的为数字,必须根据这个数字查询出职位
-                        var result=getJobGrade1(jobInfo.jobGrade);
-                        console.log(result);
-                        $(".job1_detail_title").html(result);
-                        //更新详细描述
-                        $(".job1_detail_techno_yaoqiu p").html(jobDetail.job1Detail);
-                        //联系人
-                        var chenghu=jobInfo.sex==1?"先生":"女士";
-                        $(".contactPerson").html(jobInfo.firstName+chenghu);
-                        //联系电话
-                        $(".contacPhone").html(jobInfo.phoneNum);
-                    }else{
-                        console.log(resultInfo.errorMsg);
-                    }
-                },
-                "json"
-            );
-        });
 
-        /*异步提交请求判断当前线路是否被收藏*/
-        $(function () {
-            $.post(
-                "/favorite/isFavoriteByJob1Id",
-                {job1Id:job1Id},
-                function (resultInfo) {
-                    if(resultInfo.flag){
+<script>
+    //创建vue的实例
+    var vm=new Vue({
+        el:"#job_detail",
+        data:{
+            jobInfo:{},//根据id查询的工作表信息
+            jobDetail:{},//根据id查询的工作详细信息
+            gradeName:"",//职位名称
+            jobGradeId:null,//二级分类的id
+            sex:null,//性别
+            isAddFavorite:false,//是否被收藏,默认未被收藏
+            favorateBtnClass:['btn','already'],//收藏按钮的样式类对象
+            dis:true,//默认是隐藏我的收藏的
+            bind:false,//默认可以点击我的收藏
+        },
+        methods:{
+                //添加收藏点击事件
+             addFavorite() {
+                 var job1Id = getParameter("job1Id");
+                //发送异步请求添加收藏并返回最新的收藏数量
+                 //跨域的情况下使用jsonp
+                 this.$http.get('/favorite/addFavorite',
+                     {
+                         params:{job1Id:job1Id}
+
+                     },
+                     {emulateJSON: true}
+                     //如果Web服务器无法处理编码为application/json的请求，你可以启用emulateJSON选项。
+                     //启用该选项后，请求会以application/x-www-form-urlencoded作为MIME type，就像普通的HTML表单一样
+                     //{emulateJSON: true}
+                 )
+                     .then(function (resulteInfo) {
+                         if(resulteInfo.body.flag) {
+                             var result = resulteInfo.body;
+                             //判断收藏数量是否>0
+                             if (result.data == 0) {//当用户未登陆，封装resultInfo中的data属性为0
+                                 //没有登录,跳转到登录页面
+                                 location.href = "login.html";
+                             } else if (resultInfo.data > 0) {//收藏后
+                                 //收藏成功,更新为class="btn already" disabled="disabled"
+                                 //this.favorateBtnClass.splice(1,1);
+                                 //this.dis=false;
+                                 //$(".collect a").addClass("already");
+                                 //$(".collect a").attr("disabled", "disabled");
+                                 //$(".collect a").prop("disabled",true);
+                                 //点击收藏去掉点击事件(解绑事件)
+                                 //$(".collect a").off("click");
+                                 //this.bind=false;//我的收藏不可以点击
+                                 //更新收藏数量
+                                 $(".collect span").html("已收藏" + resultInfo.data + "次");//将路线收藏的数量封装到resultInfo的data属性中
+                             }
+                         }else{
+                             console.log("服务器繁忙");
+
+                         }
+                     });
+                }
+        },
+        created(){
+            //发送get请求获取工作数据
+            var job1Id = getParameter("job1Id");
+            this.$http.get('jobInfo1/queryJobDetailById',
+                {
+                    params:{job1Id:job1Id}
+                })
+                .then(function (result) {
+                    //将结果赋值给resultInfo
+                    this.resultInfo=result.body;
+                    //如果返回正确的数据,给list赋值
+                    if(this.resultInfo.flag){
+                        //正常获取工作详情信息
+                       this.jobInfo = this.resultInfo.data;
+                       this.jobGradeId=this.jobInfo.jobGrade;
+                       this.sex=this.jobInfo.sex=='0'?'女士':'先生';
+                       this.jobDetail = this.jobInfo.jbob1Detail;
+                    }else {
+                        console.log("服务器繁忙");
+                    }
+                });
+            //提交请求判断当前线路是否被收藏
+            this.$http.get('/favorite/isFavoriteByJob1Id',
+                {
+                    params:{job1Id:job1Id}
+                })
+                .then(function (resulteInfo) {
+                    if(resulteInfo.body.flag){
+                        var result=resulteInfo.body;
                         //判断是否收藏
-                        if(!resultInfo.data){//只有resultInfo中的data属性为false才会继续往下执行
+                        console.log(result);
+                        if(!result.data){//未被收藏
                             //只考虑没收藏(因为默认就是已收藏效果)
                             // class="btn already" disabled="disabled"将这个里面的class="already"和disabled去掉
-                            $(".collect a").removeClass("already");
-                            $(".collect a").removeAttr("disabled");//显示“点击收藏”
+                            //$(".collect a").removeClass("already");
+                            this.favorateBtnClass.splice(1,1);
+                            //disable接受任何属性值，甚至只要你给标签添加了disable的属性，这个表单元素就成为不可用状态
+                            //去除disabled的办法只有移除它,但是在vue中可以通过false取消它
+                            //$(".collect a").removeAttr("disabled");//显示“点击收藏”
+                            this.dis=false;
                         }
                     }else{
-
-                        console.log(resultInfo.errorMsg);
+                        console.log("服务器繁忙");
                     }
-                },
-                "json"
-            );
-        });
+                });
 
+        },
+        mounted(){
+        },
+        beforeUpdate(){//created对data的操作到这个步骤才得到数据
+            this.$http.get('/jobCategory/getJobGradeById',
+                {
+                    params:{jobGradeId:this.jobGradeId}
+                })
+                .then(function (resulteInfo) {
 
-        //添加收藏点击事件
-        function addFavorite() {
-            //发送异步请求添加收藏并返回最新的收藏数量
-            $.post(
-                "/favorite/addFavorite",
-                {job1Id:job1Id},
-                function (resultInfo) {
-                    if(resultInfo.flag){
-                        //判断收藏数量是否>0
-                        if(resultInfo.data==0){//当用户未登陆，封装resultInfo中的data属性为0
-                            //没有登录,跳转到登录页面
-                            location.href="login.html";
-                        }else if(resultInfo.data>0){
-                            //收藏成功,更新为class="btn already" disabled="disabled"
-                            $(".collect a").addClass("already");
-                            $(".collect a").attr("disabled","disabled");
-                            //$(".collect a").prop("disabled",true);
-                            //点击收藏去掉点击事件(解绑事件)
-                            $(".collect a").off("click");
-                            //更新收藏数量
-                            $(".collect span").html("已收藏"+resultInfo.data+"次");//将路线收藏的数量封装到resultInfo的data属性中
-                        }
-                    }else{
-                        console.log(resultInfo.errorMsg);
-                    }
-                },
-                "json"
-            );
-
-        }
-        //后台查询二级类别
-        function getJobGrade1(jobGradeId) {
-            /*
-            * 发送ajax请求,去后台查询*/
-            $.ajaxSettings.async = false;
-            $.get(
-                "/jobCategory/getJobGradeById",//Servlet地址
-                {jobGradeId:jobGradeId},
-                function (resulteInfo){
-                    if(resulteInfo.flag){
-                        var data=resulteInfo.data;
-                        result=data.secondName;
+                    if(resulteInfo.body.flag){
+                        var data=resulteInfo.body.data;
+                        this.gradeName=data.secondName;
                     }else{
                         console.log("服务器繁忙")
                     }
-
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-            console.log(result);
-            return result;
+                });
         }
-    </script>
+
+    });
+</script>
 </body>
 
 </html>

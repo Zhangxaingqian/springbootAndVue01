@@ -84,3 +84,5 @@ nohup java -jar myweb-springboot-1.0-SNAPSHOT.jar > ../logs/spring.log &
 18 netstat -ano|findstr "8080" 查看8080进程   taskkill /pid  跟上pid杀死进程
 
 19 idea新项目提交到github,在vcs中 share  project on github 新建仓库名称即可
+
+20  在vue中使用jquery是得到的数据无法渲染到页面中
