@@ -14,159 +14,6 @@
     <script src="./js/vue.js"></script>
     <!--vue-source依赖于vue-->
     <script src="./js/vue-resource-1.3.4.js"></script>
-    <script type="text/javascript">
-        //页面加载事件
-       /* $(function () {
-            initSearch(null);//发送请求,进行搜索
-        });*/
-
-        //设置全局变量
-        var result=9;
-        //后台查询二级类别
-        function getJobGrade1(jobGradeId) {
-            /*
-            * 发送ajax请求,去后台查询*/
-            $.ajaxSettings.async = false;
-            $.get(
-                "/jobCategory/getJobGradeById",//Servlet地址
-                {jobGradeId:jobGradeId},
-                function (resulteInfo){
-                    if(resulteInfo.flag){
-                        var data=resulteInfo.data;
-                        result=data.secondName;
-                    }else{
-                        console.log("服务器繁忙")
-                    }
-
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-            return result;
-        }
-        //两位小数的正数的正则表达式
-        var zhengShu=new RegExp(/^((0{1}\.\d{1,2})|([1-9]\d*\.{1}\d{1,2})|([1-9]+\d*)|0)$/);
-        /*
-        * 确定按钮的事件*/
-        function priceReady() {
-            //获取上限和下限的值
-            var max_price = $("#max_price").val();
-            var min_price = $("#min_price").val();
-
-            //对上限和下限的值进行正则判断,上限必须为正数([1-9][0-9]*(\.\d{1,2})?)|(0\.\d{1,2})
-            console.log(max_price);
-            if(zhengShu.test(max_price) &&
-                zhengShu.test(min_price) &&
-                (max_price>min_price) ){
-                //发送post请求
-                var map={min_price:min_price,max_price:max_price};
-                initSearch(map);
-            }else if(zhengShu.test(max_price) && ""==min_price){
-                //发送post请求,默认最小为0
-                var map={min_price:"0",max_price:max_price};
-                initSearch(map);
-            }else if(zhengShu.test(min_price) && ""==max_price){
-                //发送post请求,默认最大为null
-                var map={min_price:min_price,max_price:null};
-                initSearch(map);
-            }else{
-                $("#max_price").val("");
-                $("#min_price").val("");
-                return;
-            }
-        }
-        function initSearch(map) {
-            //获取用户请求当前页
-            var curPage= getParameter("curPage");
-            //获取搜索的rname,这里获取的是url编码的16进制数据,需要转码url解码
-            var jname =decodeURI(getParameter("jname"))=="null"?"":decodeURI(getParameter("jname")) ;
-            $("#content").val(jname);
-            if(null!=map){
-                var minPrice = map.min_price;
-                var maxPrice = map.max_price;
-                var args={curpage: curPage, key: jname,minPrice:minPrice,maxPrice:maxPrice};
-            }else{
-                var args={curpage: curPage, key: jname};
-            }
-
-            $.ajax({
-                type: "POST",
-                url: "/es/search",
-                contentType: "application/json",
-                data: JSON.stringify(args),
-                dataType: "json",
-                success: function (resultInfo) {
-                    if (resultInfo.flag) {
-                        //正常获取数据
-                        //获取当前页PageBean数据
-                        var pageBean = resultInfo.data;
-                        //获取当前页列表数据
-                        var jobList = pageBean.data;
-                        var html = "";
-                        for (job of jobList) {
-                            html += "<tr>\n" +
-                                "<td >" + "<a href=\"/job1_detail.html?job1Id=" + job.id + "\" style='color: #3683ff'>" +
-                                getJobGrade1(job.jobGrade) + "\n" +
-                                "<td>" + job.jobSite + "\n" +
-                                "<td>" + job.jobWage + "\n" +
-                                "<td>" + JX_data(job.jobUpdateDate) + "\n";
-                        }
-                        //更新页面 /*TODO*/
-                        $(".tbody-zanshi").html(html);
-                        //更新分页信息
-                        var html = "";
-                        //拼接首页
-                        html += "<li><a href=\"job_list.html?curPage=" + pageBean.firstPage + "\">首页</a></li>";
-                        //拼接上一页pageBean.prePage
-                        if (pageBean.curPage > 1) {
-                            html += "<li class=\"threeword\"><a href=\"job_list.html?curPage=" + pageBean.prePage + "\">上一页</a></li>";
-                        }
-                        //定义起始页和结束页
-                        var begin, end;
-                        if (pageBean.totalPage <= 10) {
-                            begin = 1;
-                            end = pageBean.totalPage;
-                        } else {
-                            begin = pageBean.curPage - 5;
-                            end = pageBean.curPage + 4;
-                            // 头溢出,begin<1
-                            if (begin < 1) {
-                                begin = 1;
-                                end = begin + 9;
-                            }
-                            // 尾溢出,end>totalPage
-                            if (end > pageBean.totalPage) {
-                                end = pageBean.totalPage;
-                                begin = end - 9;
-                            }
-                        }
-                        //每页数字
-                        for (var i = begin; i <= end; i++) {
-                            if (i == pageBean.curPage) {
-                                html += "<li class=\"curPage\"><a href=\"route_list.html?curPage=" + i + "\">" + i + "</a></li>";
-                            } else {
-                                html += "<li><a href=\"job_list.html?curPage=" + i + "\">" + i + "</a></li>";
-                            }
-                        }
-                        //拼接下一页pageBean.nextPage
-                        if (pageBean.curPage < pageBean.totalPage) {
-                            html += "<li class=\"threeword\"><a href=\"job_list.html?curPage=" + pageBean.nextPage + "\">下一页</a></li>";
-                        }
-                        //拼接末页pageBean.totalPage
-                        html += " <li class=\"threeword\"><a href=\"job_list.html?curPage=" + pageBean.totalPage + "\">末页</a></li>";
-                        //更新
-                        $(".pageNum ul").html(html);
-                        //更新总页数
-                        $(".page_num_inf span:eq(0)").html(pageBean.totalPage);
-                        //更新总记录数
-                        $(".page_num_inf span:eq(1)").html(pageBean.count);
-                    } else {
-                        console.log(resultInfo.errorMsg);
-                    }
-                }
-            });
-        }
-    </script>
 
 </head>
 <body>
@@ -180,7 +27,7 @@
                 <span>-</span>
                 <input class="input_price" v-model="maxPrice" id="max_price" type="text" placeholder="￥" >
                 <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <button class="button_ready" id="btn01" onclick="priceReady()">确定</button>
+                <button class="button_ready" id="btn01" @click="priceReady">确定</button>
             </div>
             <div class="crumbs">
                 <img src="images/search.png" alt="">
@@ -270,20 +117,93 @@
 
     });
     //定义一个vue实例
-    var vm =new Vue({
+    var vmList =new Vue({
         el: "#contant",
         data: {
-            minPrice:'',//最小价格
-            maxPrice:'',//最大价格
+            minPrice:"",//最小价格
+            maxPrice:"",//最大价格
             pageInfo:{},//分页信息
             jobList:[],//工作表数据
             begin:null,//起始页
             end:null,//结束页
             jobGradeObj:["haha","jjjj"],//二级分类的对象,保存所有的二级分类信息
             jname:'',//搜索的关键字
+            zhengShu:new RegExp(/^((0{1}\.\d{1,2})|([1-9]\d*\.{1}\d{1,2})|([1-9]+\d*)|0)$/),
 
-        },
+
+
+    },
         methods:{
+            initSearch(map){
+                //获取用户请求当前页
+                var curPage= getParameter("curPage");
+                //获取搜索的rname,这里获取的是url编码的16进制数据,需要转码url解码
+                var jname =decodeURI(getParameter("jname"))=="null"?"":decodeURI(getParameter("jname")) ;
+                if(null!=map){
+                    var minPrice = map.min_price;
+                    var maxPrice = map.max_price;
+                    var args={curPage: curPage, key: jname,minPrice:minPrice,maxPrice:maxPrice};
+                }else{
+                    var args={curPage: curPage, key: jname};
+                }
+                console.log(args);
+                this.$http.post('/es/search', JSON.stringify({curPage:curPage,key: jname}),{emulateJSON: true})
+                    .then(function (result) {
+                            if(result.body.flag){
+                                //获取当前页PageBean数据
+                                this.pageInfo = result.body.data;
+                                //获取当前页列表数据
+                                this.jobList = this.pageInfo.data;
+                                //遍历jobList
+                                for(let job of this.jobList){
+                                }
+                                //给begin和end赋值
+                                if(this.pageInfo.totalPage<=10){
+                                    this.begin =1;
+                                    this.end = this.pageInfo.totalPage;
+                                }else{
+                                    this.begin = this.pageInfo.curPage-5;
+                                    this.end = this.pageInfo.curPage+4;
+                                    // 头溢出,begin<1
+                                    if(this.begin<1){
+                                        this.begin = 1;
+                                        this.end = this.begin+9;
+                                    }
+                                    // 尾溢出,end>totalPage
+                                    if(this.end>this.pageInfo.totalPage){
+                                        this.end = this.pageInfo.totalPage;
+                                        this.begin = this.end-9;
+                                    }
+                                }
+                            }else{
+
+                            }
+
+                        }
+                    );
+            },
+            priceReady(){
+                //发送价格进行过滤
+                if(this.zhengShu.test(this.maxPrice) &&
+                    this.zhengShu.test(this.minPrice) &&
+                    (this.maxPrice>this.minPrice) ){
+                    //发送post请求
+                    var map={min_price:this.minPrice,max_price:this.maxPrice};
+                    this.$options.methods.initSearch(map);
+                }else if(this.zhengShu.test(this.maxPrice) && ""==this.minPrice){
+                    //发送post请求,默认最小为0
+                    var map={min_price:"0",max_price:this.maxPrice};
+                    this.$options.methods.initSearch(map);
+                }else if(this.zhengShu.test(this.minPrice) && ""==this.maxPrice){
+                    //发送post请求,默认最大为null
+                    var map={min_price:this.minPrice,max_price:null};
+                    this.$options.methods.initSearch(map);
+                }else{
+                    this.maxPrice="";
+                    this.minPrice="";
+                    return;
+                }
+            },
 
         },
         created(){
@@ -337,14 +257,11 @@
 
         },
         beforeMount(){
-            for(jobObj in this.jobGradeObj){
-                console.log(jobObj);
-            }
+
         },
         mounted(){
         },
         beforeUpdate(){
-            console.log(this.jobGradeObj);
 
         },
         updated(){
