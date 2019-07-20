@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cn.myweb01.money01.mapper.CategoryMapper">
-
+    <cache /><!--开启二级缓存,mapper级别的-->
     <!--查询一级分类-->
     <select id="queryFirstJobCategoryList" resultType="FirstJobCategory">
         select c.first_id,c.first_name
@@ -22,5 +22,11 @@
         select s.second_name
               from second_job_category s
               where s.second_id=#{jobGradeId}
+    </select>
+
+    <!--//获取所有的二级分类信息-->
+    <select id="getAllJobGrade" resultType="SecondJobCategory">
+        select s.second_id,s.second_name
+              from second_job_category s;
     </select>
 </mapper>
