@@ -1,6 +1,8 @@
 package cn.myweb01.money01.pojo.elasticsearch;
 
-public class SearchRequest {
+import java.io.Serializable;
+
+public class SearchRequest implements Serializable {
     private static final Integer DEFAULT_PAGE = 1;// 默认页
     private static final Integer DEFAULT_SIZE = 5;// 每页大小，不从页面接收，而是固定大小
     private String key;// 搜索条件

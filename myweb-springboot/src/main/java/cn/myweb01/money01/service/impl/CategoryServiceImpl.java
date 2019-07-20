@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -93,5 +94,11 @@ public class CategoryServiceImpl implements ICategoryService {
     @Override
     public SecondJobCategory queryJobGradeById(Integer jobGradeId) {
         return this.categoryMapper.queryJobGradeById(jobGradeId);
+    }
+
+    //获取所有的二级分类信息
+    @Override
+    public List<SecondJobCategory> getAllJobGrade() {
+        return this.categoryMapper.getAllJobGrade();
     }
 }

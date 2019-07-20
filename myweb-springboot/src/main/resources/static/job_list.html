@@ -11,13 +11,14 @@
     <script src="js/jquery-3.3.1.js"></script>
     <script type="text/javascript" src="js/getParameter.js"></script>
     <script type="text/javascript" src="js/myTool.js"></script>
+    <script src="./js/vue.js"></script>
+    <!--vue-source依赖于vue-->
+    <script src="./js/vue-resource-1.3.4.js"></script>
     <script type="text/javascript">
         //页面加载事件
-        $(function () {
+       /* $(function () {
             initSearch(null);//发送请求,进行搜索
-        });
-
-
+        });*/
 
         //设置全局变量
         var result=9;
@@ -166,17 +167,18 @@
             });
         }
     </script>
+
 </head>
 <body>
 <!--引入头部-->
 <div id="header"></div>
     <div class="page_one">
-        <div class="contant">
+        <div class="contant" id="contant">
             <div class="search_filter_all">
                 <span class="price_range" style="display: inline-block">日薪:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <input class="input_price" id="min_price" type="text" placeholder="￥" >
+                <input class="input_price" v-model="minPrice" id="min_price" type="text" placeholder="￥" >
                 <span>-</span>
-                <input class="input_price" id="max_price" type="text" placeholder="￥" >
+                <input class="input_price" v-model="maxPrice" id="max_price" type="text" placeholder="￥" >
                 <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <button class="button_ready" id="btn01" onclick="priceReady()">确定</button>
             </div>
@@ -198,16 +200,36 @@
                             <th>发布时间
                         </thead>
                         <tbody class="tbody-zanshi">
-
+                        <tr v-for="job in jobList">
+                            <td ><a v-text="job.jobGrade" :href="'job1_detail.html?job1Id='+job.job1Id"></a></td>
+                            <td v-text="job.jobSite"></td>
+                            <td v-text="job.jobWage"></td>
+                            <td >{{job.jobUpdateDate | dateFormat}}</td>
+                        </tr>
                         </tbody>
                     </table>
                     <div class="page_num_inf">
                         <i></i> 共
-                        <span></span>页<span></span>条
+                        <span v-text="pageInfo.totalPage"></span>页<span v-text="pageInfo.count"></span>条
+
                     </div>
                     <div class="pageNum">
-                        <ul>
-                          </ul>
+                        <ul >
+                            <li><a :href="'job_list.html?jname='+jname+'&curPage='+pageInfo.firstPage">首页</a></li>
+                            <li class="threeword" v-show="pageInfo.curPage>1"><a :href="'job_list.html?jname='+jname+'&curPage='+pageInfo.prePage">上一页</a></li>
+
+                            <span v-for="num in end " >
+                                <span v-if="num == pageInfo.curPage">
+                                    <li class="curPage"><a :href="'job_list.html?jname='+jname+'&curPage='+num"  v-text="num"></a></li>
+                                </span>
+                                <span v-else-if="num >=begin">
+                                    <li><a :href="'job_list.html?jname='+jname+'&curPage='+num" v-text="num"></a></li>
+                                </span>
+                            </span>
+                            <li class="threeword" v-show="pageInfo.curPage<pageInfo.totalPage"><a :href="'job_list.html?jname='+jname+'&curPage='+pageInfo.nextPage">下一页</a></li>
+
+                            <li class="threeword"><a :href="'job_list.html?jname='+jname+'&curPage='+pageInfo.totalPage">末页</a></li>
+                        </ul>
                     </div>
                 </div>
 
@@ -219,6 +241,117 @@
     <div id="footer"></div>
     <!--导入布局js，共享header和footer-->
     <script type="text/javascript" src="js/include.js"></script>
+<script>
+    //定义过滤器,进行时间的格式化,这是全局的,过滤器只能在插值表达式中使用
+    Vue.filter("dateFormat",function (dateStr) {
+        var date=new Date(dateStr);
+        //获取年月日
+        var year=date.getFullYear();
+        var month=(date.getMonth()+1).toString().padStart(2,"0");
+        var day=date.getDate().toString().padStart(2,"0");
+        return `${year}-${month}-${day}`;
+    });
+    //定义过滤器,进行时间的格式化,这是全局的,过滤器只能在插值表达式中使用
+    Vue.filter("getGradeName01",function (dateStr) {
+        console.log(this.jobGradeObj);
+        //发送ajax根据值获取名称
+        var secondName=null;
+        /*this.$http.get('/jobCategory/getJobGradeById',{jobGradeId: dateStr})
+            .then(function (result) {
+                    if(result.body.flag){
+                        var data=result.body.data;
+                        secondName=data.secondName;
+
+                    }else{
+                        console.log("服务器繁忙")
+                    }
+                });*/
+        return secondName;
+
+    });
+    //定义一个vue实例
+    var vm =new Vue({
+        el: "#contant",
+        data: {
+            minPrice:'',//最小价格
+            maxPrice:'',//最大价格
+            pageInfo:{},//分页信息
+            jobList:[],//工作表数据
+            begin:null,//起始页
+            end:null,//结束页
+            jobGradeObj:["haha","jjjj"],//二级分类的对象,保存所有的二级分类信息
+            jname:'',//搜索的关键字
+
+        },
+        methods:{
+
+        },
+        created(){
+            //获取用户请求当前页
+            var curPage= getParameter("curPage");
+            //获取搜索的rname,这里获取的是url编码的16进制数据,需要转码url解码
+            var jname =decodeURI(getParameter("jname"))=="null"?"":decodeURI(getParameter("jname")) ;
+            this.jname=jname;
+            this.$http.post('/es/search', JSON.stringify({curPage:curPage,key: jname}),{emulateJSON: true})
+                .then(function (result) {
+                        if(result.body.flag){
+                            //获取当前页PageBean数据
+                            this.pageInfo = result.body.data;
+                            //获取当前页列表数据
+                            this.jobList = this.pageInfo.data;
+                            //遍历jobList
+                            for(let job of this.jobList){
+                            }
+                            //给begin和end赋值
+                            if(this.pageInfo.totalPage<=10){
+                                this.begin =1;
+                                this.end = this.pageInfo.totalPage;
+                            }else{
+                                this.begin = this.pageInfo.curPage-5;
+                                this.end = this.pageInfo.curPage+4;
+                                // 头溢出,begin<1
+                                if(this.begin<1){
+                                    this.begin = 1;
+                                    this.end = this.begin+9;
+                                }
+                                // 尾溢出,end>totalPage
+                                if(this.end>this.pageInfo.totalPage){
+                                    this.end = this.pageInfo.totalPage;
+                                    this.begin = this.end-9;
+                                }
+                            }
+                        }else{
+
+                        }
+
+                    }
+                );
+            //发送ajax获取所有的二级分类信息,并且保存到一个json对象中
+            this.$http.get('/jobCategory/getAllJobGrade').then(function (result) {
+                if(result.body.flag){
+                    this.jobGradeObj = result.body.data;
+                }else{
+                    console.log("获取二级分类列表失败");
+                }
+            });
+
+        },
+        beforeMount(){
+            for(jobObj in this.jobGradeObj){
+                console.log(jobObj);
+            }
+        },
+        mounted(){
+        },
+        beforeUpdate(){
+            console.log(this.jobGradeObj);
+
+        },
+        updated(){
+
+        }
+    });
+</script>
 </body>
 
 </html>

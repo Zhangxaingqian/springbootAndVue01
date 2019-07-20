@@ -14,7 +14,6 @@ public class JobSearch {
     private Integer id; // job1_id
     @Field(type = FieldType.Text)
     private String all; // 所有需要被搜索的信息，包含工作等级,薪水,工作详细要求
-    @Field(type = FieldType.Keyword, index = true)//设置为false就不可以通过这个字段搜索
     private Integer jobWage;// 价格
     private String jobSite;// 位置
     private Integer jobGrade;// 职位等级

@@ -14,4 +14,7 @@ public interface CategoryMapper {
     List<SecondJobCategory> querySecondJobCategoryById(@Param("firstId") int firstId);
     //根据二级分类的id查询二级分类的名字
     SecondJobCategory queryJobGradeById(@Param("jobGradeId")Integer jobGradeId);
+
+    //获取所有的二级分类的信息
+    List<SecondJobCategory> getAllJobGrade();
 }

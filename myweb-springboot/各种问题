@@ -86,3 +86,5 @@ nohup java -jar myweb-springboot-1.0-SNAPSHOT.jar > ../logs/spring.log &
 19 idea新项目提交到github,在vcs中 share  project on github 新建仓库名称即可
 
 20  在vue中使用jquery是得到的数据无法渲染到页面中
+
+21  vue的实例必须放到html的下面,否则获取不到el
