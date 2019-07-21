@@ -48,10 +48,10 @@
                         </thead>
                         <tbody class="tbody-zanshi">
                         <tr v-for="job in jobList">
-                            <td ><a v-text="job.jobGrade" :href="'job1_detail.html?job1Id='+job.job1Id"></a></td>
+                            <td ><a v-text="job.jobGradeName" :href="'job1_detail.html?job1Id='+job.jobGrade"></a></td>
                             <td v-text="job.jobSite"></td>
                             <td v-text="job.jobWage"></td>
-                            <td >{{job.jobUpdateDate | dateFormat}}</td>
+                            <td >{{job.jobUpdateDate | dateFormat}}</td>job1Detail
                         </tr>
                         </tbody>
                     </table>
@@ -207,6 +207,14 @@
 
         },
         created(){
+            //发送ajax获取所有的二级分类信息,并且保存到一个json对象中
+            this.$http.get('/jobCategory/getAllJobGrade').then(function (result) {
+                if(result.body.flag){
+                    this.jobGradeObj = result.body.data;
+                }else{
+                    console.log("获取二级分类列表失败");
+                }
+            });
             //获取用户请求当前页
             var curPage= getParameter("curPage");
             //获取搜索的rname,这里获取的是url编码的16进制数据,需要转码url解码
@@ -246,14 +254,7 @@
 
                     }
                 );
-            //发送ajax获取所有的二级分类信息,并且保存到一个json对象中
-            this.$http.get('/jobCategory/getAllJobGrade').then(function (result) {
-                if(result.body.flag){
-                    this.jobGradeObj = result.body.data;
-                }else{
-                    console.log("获取二级分类列表失败");
-                }
-            });
+
 
         },
         beforeMount(){
@@ -262,6 +263,21 @@
         mounted(){
         },
         beforeUpdate(){
+            console.log( this.jobGradeObj);
+            console.log( this.jobList);
+            //遍历工作表这个数组
+            this.jobList.forEach((job,index01)=> {
+                //console.log(job.jobInfo1.jobGrade);
+                var jobId=job.jobGrade;
+                //遍历字典表的数组
+                this.jobGradeObj.forEach((obj,index02)=> {
+                    //console.log(job);
+                    if(obj.secondId==jobId){//给job添加新的属性
+                        this.jobList[index01].jobGradeName=obj.secondName;
+                    }
+                });
+
+            });
 
         },
         updated(){

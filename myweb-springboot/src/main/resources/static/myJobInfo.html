@@ -18,319 +18,9 @@
     </style>
     <script src="js/jquery-3.3.1.js"></script>
     <script type="text/javascript" src="js/getParameter.js"></script>
-    <script>
-
-        $(function () {
-            var id;
-            /*当页面加载的时候,默认发送ajax请求,获取一级分类的列表,并填充到select中*/
-            getFirstJobCategory();//获取所有的一级工作列表
-            getUserFirstJobCategory();//将用户的一级工作反显到页面中
-            getSecondJobCategory();//根据一级工作查询二级工作的列表
-            getUserSecondJobCategory();//将用户的二级工作反显到页面中
-            getProvince();//获取所有的省份列表
-            getUserProvince();//将用户的省份反显到页面
-            getCityByProvince();//根据省份获取所有的城市
-            getUserCityByProvince();//将用户的城市反显
-            getAreaByCity();//根据城市获取所有的地区
-            getUserAreaByCity();//将用户的地区反显
-
-
-            /*一二级工作下拉框的联动*/
-            $("#jobCategory").bind("change",function() {
-                // 先清空下一级
-                $("#jobGrade").empty();
-                $("#jobGrade").append("<option>" + "请选择职业等级" + "</option>");
-                var firstId = $(this).val();//获取id值
-                //发送post请求
-                $.post(
-                    "/jobCategory/querySecondJobCategoryListById",
-                    {firstId: firstId},
-                    function (jsonData) {
-                        if (jsonData && jsonData.length > 0) {
-                            for (second of jsonData) {
-                                $("#jobGrade").append("<option value='" + second.secondId + "'>" + second.secondName + "</option>");
-                            }
-                        } else {
-                            console.log(jsonData.errorMsg)
-                        }
-                    },
-                    "json"
-                );
-            })
-
-            //省市级的联动
-            $("#province").bind("change",function() {
-                // 先清空下两级
-                $("#city").empty();
-                $("#area").empty();
-                $("#city").append("<option>" + "请选择城市" + "</option>");
-                $("#area").append("<option>" + "请选择地区" + "</option>");
-                var code = $(this).val();//获取code值
-                //发送post请求
-                $.post(
-                    "/provinceCity/city",
-                    {provinceCode: code},
-                    function (jsonData) {
-                        if (jsonData && jsonData.length > 0) {
-                            for (city of jsonData) {
-                                $("#city").append("<option value='" + city.code + "'>" + city.name + "</option>");
-                            }
-                        } else {
-                            console.log(jsonData.errorMsg)
-                        }
-                    },
-                    "json"
-                );
-            })
-            //市和区县的联动
-            $("#city").bind("change",function() {
-                // 先清空下一级
-                $("#area").empty();
-                $("#area").append("<option>" + "请选择地区" + "</option>");
-                var code = $(this).val();//获取code值
-                //发送post请求
-                $.post(
-                    "/provinceCity/area",
-                    {cityCode: code},
-                    function (jsonData) {
-                        if (jsonData && jsonData.length > 0) {
-                            for (area of jsonData) {
-                                $("#area").append("<option value='" + area.code + "'>" + area.name + "</option>");
-                            }
-                        } else {
-                            console.log(jsonData.errorMsg)
-                        }
-                    },
-                    "json"
-                );
-            })
-
-        });
-
-        function getFirstJobCategory() {
-            $.ajaxSettings.async = false;
-            $.post(
-                "/jobCategory/queryFirstJobCategoryList",
-                function(jsonData){
-                    /*
-                    *  //如果有异常,拿到的结果是一个对象,没有length属性
-                    //而返回的是数组,则是正常对象
-                    * var jsonObj  = JSON.parse(jsonStr);     // 字符串转为json对象
-                        var jsonArry = JSON.parse(jsonArryStr); // 字符串转为json数组
-                        var jsonStr  = JSON.stringify(jsonObj); // json对象转为字符串
-                        var jsonArryStr=JSON.stringify(jsonArry);// json数组转为字符串
-                    * */
-                    if(jsonData && jsonData.length>0){
-                        //将数据取出渲染到select的option中
-                        for(first of jsonData){
-                            $("#jobCategory").append("<option value='"+first.firstId+"'>"+first.firstName+"</option>");
-                        }
-                    }else{
-                        console.log(jsonData.errorMsg);
-                    }
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-        }
-        /*
-                        * 当页面加载的时候,如果已经存在招聘的信息
-                        * 就将信息反显到页面中
-                        * */
-
-        function getUserFirstJobCategory() {
-            $.ajaxSettings.async = false;
-            $.post(
-                "/jobInfo1/queryJobInfoByUserName",
-                function (resultInfo) {
-                    if(resultInfo.flag){
-                        //正常获取工作详情信息
-                        var jobInfo = resultInfo.data;
-                        var jobDetail = jobInfo.jbob1Detail;
-                        //将信息反显到页面中
-                        $("#jobCategory").val(jobInfo.jobCategory);
-                    }else{
-                        console.log("服务器繁忙")
-                    }
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-        }
-        /*这个ajax需要在渲染职业种类渲染之后执行*/
-        function getSecondJobCategory(){
-            //发送post请求
-            $.ajaxSettings.async = false;
-            $.post(
-                "/jobCategory/querySecondJobCategoryListById",
-                {firstId: $("#jobCategory").val()},
-                function (jsonData) {
-                    if (jsonData && jsonData.length > 0) {
-                        $("#jobGrade").empty();
-                        $("#jobGrade").append("<option>" + "请选择职业等级" + "</option>");
-                        for (second of jsonData) {
-                            $("#jobGrade").append("<option value='" + second.secondId + "'>" + second.secondName + "</option>");
-                        }
-                    } else {
-                        console.log(jsonData.errorMsg)
-                    }
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-        }
-        /*
-                      * 当页面加载的时候,如果已经存在招聘的信息
-                      * 就将信息反显到页面中
-                      * */
-        function getUserSecondJobCategory() {
-            $.ajaxSettings.async = false;
-            $.post(
-                "/jobInfo1/queryJobInfoByUserName",
-                function (resultInfo) {
-                    if(resultInfo.flag){
-                        //正常获取工作详情信息
-                        var jobInfo = resultInfo.data;
-                        var jobDetail = jobInfo.jbob1Detail;
-                        //将信息反显到页面中
-                        $("#jobGrade").val(jobInfo.jobGrade);
-                        $("#jobDetail").val(jobDetail.job1Detail);
-                        $("#jobSite").val(jobInfo.jobSite);
-                        $("#jobWage").val(jobInfo.jobWage);
-                        $("#firstName").val(jobInfo.firstName);
-                        $("#sex").val(jobInfo.sex);
-                        $("#phoneNum").val(jobInfo.phoneNum);
-                    }else{
-                        console.log("服务器繁忙")
-                    }
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-
-        }
-        //获取所有的省份列表
-        function getProvince() {
-            $.ajaxSettings.async = false;
-            $.post(
-                "/provinceCity/province",
-                function(jsonData){
-                    if(jsonData && jsonData.length>0){
-                        //将数据取出渲染到select的option中
-                        for(province of jsonData){
-                            $("#province").append("<option value='"+province.code+"'>"+province.name+"</option>");
-                        }
-                    }else{
-                        console.log(jsonData.errorMsg);
-                    }
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-        }
-        //根据省份获取所有的城市
-        function getCityByProvince() {
-            $.ajaxSettings.async = false;
-            $.post(
-                "/provinceCity/city",
-                {provinceCode: $("#province").val()},
-                function(jsonData){
-                    if(jsonData && jsonData.length>0){
-                        //将数据取出渲染到select的option中
-                        for(city of jsonData){
-                            $("#city").append("<option value='"+city.code+"'>"+city.name+"</option>");
-                        }
-                    }else{
-                        console.log(jsonData.errorMsg);
-                    }
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-        }
-        //根据城市获取所有的地区
-        function getAreaByCity() {
-            $.ajaxSettings.async = false;
-            $.post(
-                "/provinceCity/area",
-                {cityCode:$("#city").val()},
-                function(jsonData){
-                    if(jsonData && jsonData.length>0){
-                        //将数据取出渲染到select的option中
-                        for(area of jsonData){
-                            $("#area").append("<option value='"+area.code+"'>"+area.name+"</option>");
-                        }
-                    }else{
-                        console.log(jsonData.errorMsg);
-                    }
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-        }
-        //将用户的省份反显
-        function getUserProvince() {
-            $.ajaxSettings.async = false;
-            $.post(
-                "/jobInfo1/queryJobInfoByUserName",
-                function (resultInfo) {
-                    if(resultInfo.flag){
-                        //正常获取工作详情信息
-                        var jobInfo = resultInfo.data;
-                        var jobDetail = jobInfo.jbob1Detail;
-                        //将信息反显到页面中
-                        $("#province").val(jobInfo.provinceCode);
-                    }else{
-                        console.log("服务器繁忙")
-                    }
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-        }
-        //将用户的城市反显
-        function getUserCityByProvince() {
-            $.ajaxSettings.async = false;
-            $.post(
-                "/jobInfo1/queryJobInfoByUserName",
-                function (resultInfo) {
-                    if(resultInfo.flag){
-                        //正常获取工作详情信息
-                        var jobInfo = resultInfo.data;
-                        var jobDetail = jobInfo.jbob1Detail;
-                        //将信息反显到页面中
-                        $("#city").val(jobInfo.cityCode);
-                    }else{
-                        console.log("服务器繁忙")
-                    }
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-        }
-        //将用户的地区反显
-        function getUserAreaByCity() {
-            $.ajaxSettings.async = false;
-            $.post(
-                "/jobInfo1/queryJobInfoByUserName",
-                function (resultInfo) {
-                    if(resultInfo.flag){
-                        //正常获取工作详情信息
-                        var jobInfo = resultInfo.data;
-                        var jobDetail = jobInfo.jbob1Detail;
-                        //将信息反显到页面中
-                        $("#area").val(jobInfo.areaCode);
-                    }else{
-                        console.log("服务器繁忙")
-                    }
-                },
-                "json"
-            );
-            $.ajaxSettings.async = true;
-        }
-
-
-    </script>
+    <script src="./js/vue.js"></script>
+    <!--vue-source依赖于vue-->
+    <script src="./js/vue-resource-1.3.4.js"></script>
 </head>
 <body>
 <!--引入头部-->
@@ -338,7 +28,7 @@
 
 <div class="rg_form">
     <!--招聘信息-->
-    <div class="job_content">
+    <div class="job_content" id="jobContent">
         <!--招聘表单-->
         <form id="jobInfoForm">
             <!--提交处理请求的标识符-->
@@ -349,9 +39,10 @@
                         <label for="jobCategory">职业:</label>
                     </td>
                     <td class="td_right">
-                        <select type="text" id="jobCategory" name="jobCategory" style="width:150px" >
+                        <select type="text" v-model="jobInfo.jobCategory" id="jobCategory" name="jobCategory" style="width:150px" >
                             <option >请选择职业</option>
-                            </select>
+                            <option  v-for="list in jobCategoryList" :value="list.firstId">{{list.firstName}}</option>
+                        </select>
                     </td>
                 </tr>
                 <tr>
@@ -359,8 +50,10 @@
                         <label for="jobGrade">职业等级:</label>
                     </td>
                     <td class="td_right">
-                        <select type="text" id="jobGrade" name="jobGrade" style="width:150px" >
-                            <option >请选择职业等级</option></select>
+                        <select type="text"  v-model="jobInfo.jobGrade" id="jobGrade" name="jobGrade" style="width:150px" >
+                            <option >请选择职业等级</option>
+                        <option  v-for="list in jobGradeList" :value="list.secondId">{{list.secondName}}</option>                            </select>
+                        </select>
                     </td>
                 </tr>
                 <tr>
@@ -368,7 +61,7 @@
                         <label for="jobDetail">职业具体要求:</label>
                     </td>
                     <td class="td_right">
-                        <textarea id="jobDetail" name="jobDetail" rows="10" cols="100" placeholder="请输入具体要求" style="border-radius: 4px;"></textarea>
+                        <textarea  v-model="jobInfo.jobDetail"  id="jobDetail" name="jobDetail" rows="10" cols="100" placeholder="请输入具体要求" style="border-radius: 4px;"></textarea>
                     </td>
                 </tr>
                 <tr>
@@ -376,12 +69,21 @@
                         <label for="province">地区:</label>
                     </td>
                     <td class="td_right">
-                    <select type="text" id="province" name="province" style="width:150px" >
-                        <option >请选择省份</option></select>
-                        <select type="text" id="city" name="city" style="width:150px" >
-                            <option >请选择城市</option></select>
-                        <select type="text" id="area" name="area" style="width:150px" >
-                            <option >请选择地区</option></select>
+                    <select type="text" v-model="jobInfo.provinceCode" id="province" name="province" style="width:150px" >
+                        <option >请选择省份</option>
+                        <option  v-for="list in provinceList" :value="list.code">{{list.name}}</option>                            </select>
+                        </select>
+
+                        <select type="text" v-model="jobInfo.cityCode" id="city" name="city" style="width:150px" >
+                            <option >请选择城市</option>
+                            <option  v-for="list in cityList" :value="list.code">{{list.name}}</option>                            </select>
+
+                        </select>
+                        <select type="text" v-model="jobInfo.areaCode" id="area" name="area" style="width:150px" >
+                            <option >请选择地区</option>
+                            <option  v-for="list in areaList" :value="list.code">{{list.name}}</option>                            </select>
+
+                        </select>
                     </td>
                 </tr>
                 <tr>
@@ -389,7 +91,7 @@
                         <label for="jobWage">提供日薪:</label>
                     </td>
                     <td class="td_right">
-                        <input type="text" id="jobWage" name="jobWage" placeholder="请输入日薪" style="text-align:right">
+                        <input type="text" v-model="jobInfo.jobWage" id="jobWage" name="jobWage" placeholder="请输入日薪" style="text-align:right">
                         元/天
                     </td>
                 </tr>
@@ -398,8 +100,8 @@
                         <label for="firstName">联系人:</label>
                     </td>
                     <td class="td_right">
-                        <input type="text" id="firstName" name="firstName" placeholder="请输入联系人称呼" style="text-align:right">
-                        <select id="sex" name="sex">
+                        <input type="text" v-model="jobInfo.firstName" id="firstName" name="firstName" placeholder="请输入联系人称呼" style="text-align:right">
+                        <select id="sex" v-model="jobInfo.sex" name="sex">
                             <option value="1">先生</option>
                             <option value="0">女士</option>
                         </select>
@@ -410,7 +112,7 @@
                         <label for="phoneNum" style="width: 200px">联系电话:</label>
                     </td>
                     <td class="td_right">
-                        <input type="text" id="phoneNum" name="phoneNum" placeholder="请输入联系人手机号">
+                        <input type="text" v-model="jobInfo.phoneNum" id="phoneNum" name="phoneNum" placeholder="请输入联系人手机号">
 
                     </td>
                 </tr>
@@ -418,8 +120,8 @@
                     <td class="td_left">
                     </td>
                     <td class="td_right check">
-                        <input type="submit" class="submit" value="确定">
-                        <span id="msg" style="color: red;"></span>
+                        <input type="button" @click="jobInfoSubmit" class="submit" value="确定">
+                        <span id="msg" v-text="errorMsg" style="color: red;"></span>
                     </td>
                 </tr>
             </table>
@@ -430,40 +132,149 @@
 <div id="footer"></div>
 <!--导入布局js，共享header和footer-->
 <script type="text/javascript" src="js/include.js"></script>
-<script>
-    /*表单提交的过程*/
-    $(function () {
-        //目的：校验用户名，通过之后提交异步请求进行用户招聘信息收集
 
-        //1.注册表单提交事件
-        $("#jobInfoForm").submit(function () {
-            //2.校验各项不为空
-            var jobGrade = $("#jobGrade").val();
-            //校验用户名，校验要求用户名字符长度6~18个字符，首字符必须为英文字母，其它字符范围为数字或英文字母或下划线
-            var reg=/^[a-zA-Z]\w{5,17}$/;
-            //if(reg.test(username)){
-            if(true){
-                //提交异步请求
-                var url="/jobInfo1/saveInfo";//招聘信息保存Servlet
-                var data=$(this).serialize();//获取表单所有元素数据key1=value1&key2=value2
-                var callback = function (resultInfo) {
-                    if(resultInfo.flag){
-                        //注册成功,跳转register_ok.html
-                        location.href="zhaopin_ok.html";
-                    }else{
-                        //发生异常
-                        $("#msg").text(resultInfo.errorMsg);
-                    }
-                };
-                var type="json";
-                $.post(url,data,callback,type);
-            }else{
-                console.log("用户名验证失败");
-            }
-            return false;//不让表单提交
-        });
+<script>
+    var vm =new Vue({/*TODO*/
+       el:"#jobContent",
+       data:{
+           jobInfo:{
+               jobCategory:'请选择职业',//下拉框选择的一级分类
+               jobGrade:'请选择职业等级',//下拉框选择的二级分类
+               provinceCode:'请选择省份',//下拉框选择的省份
+               cityCode:'请选择城市',//下拉框选择的城市
+               areaCode:'请选择地区',//下拉框选择的地区
+               jobDetail:'',//工作详细要求
+               jobWage:'',//提供的日薪
+               firstName:'',//姓氏
+               sex:'1',//性别
+               phoneNum:''//联系电话
+           },
+           jobCategoryList:[],//接收返回的一级分类列表
+           jobGradeList:[],//接收返回的二级分类列表
+           provinceList:[],//接收返回的省份列表
+           cityList:[],//接收返回的城市列表
+           areaList:[],//接收返回的地区列表
+           errorMsg:'',//错误的信息
+       },
+        methods:{
+            jobInfoSubmit(){//表单提交
+                var flag1="请选择职业"==this.jobInfo.jobCategory;
+                var flag2="请选择职业等级"==this.jobInfo.jobGrade;
+                var flag3="请选择省份"==this.jobInfo.provinceCode;
+                var flag4="请选择城市"==this.jobInfo.cityCode;
+                var flag5="请选择地区"==this.jobInfo.areaCode;
+                if(!flag1 && !flag2 && !flag3 && !flag4 && !flag5 ){
+                    this.$http.post('/jobInfo1/saveInfo', this.jobInfo,{emulateJSON: true})
+                        .then(function (result) {
+                            if (result.body.flag) {
+                                location.href="zhaopin_ok.html";
+                            }else{
+                                this.errorMsg=result.body.errorMsg;
+                            }
+                        });
+                }else{
+                    this.errorMsg='请填写完整的信息';
+                }
+
+            },
+        },
+        created(){
+            //发送ajax获取所有的一级分类信息,并且保存到一个json对象中
+            this.$http.get('/jobCategory/queryFirstJobCategoryList').then(function (result) {
+                if(result.body && result.body.length>0){
+                    this.jobCategoryList = result.body;
+                    //默认下拉框显示
+                    //this.jobInfo.jobCategory = this.jobInfo.jobCategoryList[0].firstName;
+                }else{
+                    console.log("获取一级分类列表失败");
+                }
+            });
+            //发送ajax获取所有的城市分类信息,并且保存到一个json对象中
+            this.$http.get('/provinceCity/province').then(function (result) {
+                if(result.body && result.body.length>0){
+                    this.provinceList = result.body;
+                    //默认下拉框显示
+                    //this.jobInfo.jobCategory = this.jobInfo.jobCategoryList[0].firstName;
+                }else{
+                    console.log("获取一级分类列表失败");
+                }
+            });
+            //发送请求,获取当前人的所有信息
+            this.$http.get('/jobInfo1/queryJobInfoByUserName').then(function (result) {
+                if(result.body.flag){
+                    this.jobInfo = result.body.data;
+                    this.jobInfo.jobDetail=result.body.data.jbob1Detail.job1Detail;
+                    console.log(this.jobInfo);
+                }else{
+                    console.log("获取当前人招聘信息失败");
+                }
+            });
+
+        },
+        beforeMount(){
+            console.log(this.jobCategoryList);
+            this.jobCategoryList.forEach((item,index)=>{
+                console.log(item.firstId);
+                console.log(item.firstName);
+            });
+        },
+        watch:{
+            'jobInfo.jobCategory':function (newVal,oldVal) {
+                console.log(oldVal);
+                if("请选择职业"!=oldVal){
+                    this.jobInfo.jobGrade='请选择职业等级';
+                }
+                if("请选择职业"!=newVal){//发送ajax获取二级分类的信息
+                    this.$http.get('/jobCategory/querySecondJobCategoryListById',{params:{firstId:newVal}},{emulateJSON: true}).then(function (result) {
+                        if(result.body && result.body.length>0){
+                            this.jobGradeList = result.body;
+                            //默认下拉框显示
+                            //this.jobInfo.jobCategory = this.jobInfo.jobCategoryList[0].firstName;
+                        }else{
+                            console.log("获取二级分类列表失败");
+                        }
+                    });
+                }
+            },
+            'jobInfo.provinceCode':function (newVal,oldVal) {
+                if("请选择省份"!=oldVal){
+                    this.jobInfo.cityCode='请选择城市';
+                }
+                //this.jobInfo.cityCode='请选择城市';
+                if("请选择省份"!=newVal){//发送ajax获取二级分类的信息
+                    this.$http.get('/provinceCity/city',{params:{provinceCode:newVal}},{emulateJSON: true}).then(function (result) {
+                        if(result.body && result.body.length>0){
+                            this.cityList = result.body;
+                            //默认下拉框显示
+                            //this.jobInfo.jobCategory = this.jobInfo.jobCategoryList[0].firstName;
+                        }else{
+                            console.log("获取城市列表失败");
+                        }
+                    });
+                }
+            },
+            'jobInfo.cityCode':function (newVal,oldVal) {
+                if("请选择城市"!=oldVal){
+                    this.jobInfo.areaCode='请选择地区';
+                }
+                //this.jobInfo.areaCode='请选择地区';
+                if("请选择城市"!=newVal){
+
+                    //发送ajax获取地区的信息
+                    this.$http.get('/provinceCity/area',{params:{cityCode:newVal}},{emulateJSON: true}).then(function (result) {
+                        if(result.body && result.body.length>0){
+                            this.areaList = result.body;
+                            //默认下拉框显示
+                            //this.jobInfo.jobCategory = this.jobInfo.jobCategoryList[0].firstName;
+                        }else{
+                            console.log("获取地区列表失败");
+                        }
+                    });
+                }
+            },
+
+        }
     });
 </script>
-
 </body>
 </html>

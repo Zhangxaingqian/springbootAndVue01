@@ -54,7 +54,7 @@ public class JobCategoryController {
      * 根据一级分类的id获取二级分类的内容*/
     @RequestMapping("querySecondJobCategoryListById")
     @ResponseBody
-    public String querySecondJobCategoryListById(@RequestParam(value = "firstId", required = true) Integer firstId) {
+    public String querySecondJobCategoryListById(@RequestParam(value = "firstId", required = false) Integer firstId) {
         log.info("查询工作二级分类开始,一级分类的id为:" + firstId);
         String jsonData = null;
         try {
@@ -99,7 +99,7 @@ public class JobCategoryController {
 
     }
 
-    /*获取所有的危机分类的信息*/
+    /*获取所有的二级分类的信息*/
     @RequestMapping("getAllJobGrade")
     @ResponseBody
     public ResultInfo getAllJobGrade() {
